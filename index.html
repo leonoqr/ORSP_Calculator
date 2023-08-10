@@ -11,10 +11,27 @@
     <div class="container">
         <h1>MRI Budget Calculator</h1>
         <div class="form">
-            <label for="budget">Enter your budget</label>
-            <input type="number" id="budget" name="buget">
-            <label for="max_t">Enter maximum fMRI scan time</label>
-            <input type="number" id="max_t" name="max_t">
+            <h2> 1. Budget </h2>
+            <label for="budget"> Enter your budget</label>
+            <input type="number" id="budget" name="budget">
+            <label for="maxT">Enter maximum fMRI scan time</label>
+            <input type="number" id="maxT" name="maxT">
+            <label for="maxT">Enter minimum fMRI scan time</label>
+            <input type="number" id="maxT" name="maxT">
+            <label for="ScanItvl">Enter scan intervals</label>
+            <input type="number" id="ScanItvl" name="ScanItvl">
+            <label for="CostTime">MRI cost per time</label>
+            <input type="number" id="CostTime" name="CostTime">
+            <label for="psScanTime_El">Per-session scan overhead</label>
+            <input type="number" id="psScanTime_El" name="psScanTime_El">
+            <label for="otScanTime_El">One-time scan overhead</label>
+            <input type="number" id="otScanTime_El" name="otScanTime_El">
+            <label for="PptCost_El">Per subject cost</label>
+            <input type="number" id="PptCost_El" name="PptCost_El">
+            <label for="SsnCost_El">Per session cost</label>
+            <input type="number" id="SsnCost_El" name="SsnCost_El">
+            <label for="maxS">Enter maximum session</label>
+            <input type="number" id="maxS" name="maxS">
             <button id="btn">Calculate optimal design</button>
             <p id="result">Your age is 21 years old</p>
         </div>

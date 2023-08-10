@@ -1,14 +1,15 @@
 const btnEl = document.getElementById("btn");
-const birthdayEl = document.getElementById("birthday");
+const budgetEl = document.getElementById("budget");
+const max_tEl = document.getElementById("max_t");
 const resultEl = document.getElementById("result");
 
-function calculateAge() {
-  const birthdayValue = birthdayEl.value;
-  if (birthdayValue === "") {
-    alert("Please enter your birthday");
+function getParams() {
+  const bugetValue = budgetEl.value;
+  const max_tValue = max_tEl.value;
+  if (bugetValue === "") {
+    alert("Please enter a budget");
   } else {
-    const age = getAge(birthdayValue);
-    resultEl.innerText = `Your age is ${age} ${age > 1 ? "years" : "year"} old`;
+    resultEl.innerText = `Buget is ${budget} and max_t is ${max_t}`;
   }
 }
 
@@ -28,4 +29,4 @@ function getAge(birthdayValue) {
   return age;
 }
 
-btnEl.addEventListener("click", calculateAge);
+btnEl.addEventListener("click", getParams);

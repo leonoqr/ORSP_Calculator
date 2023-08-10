@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRI Economics Calculator</title>
+    <title>MRI Budget Calculator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Age Calculator</h1>
+        <h1>MRI Budget Calculator</h1>
         <div class="form">
-            <label for="birthday">Enter your budget</label>
-            <input type="date" id="birthday" name="birthday">
-            <button id="btn">Calculate Age</button>
+            <label for="budget">Enter your budget</label>
+            <input type="number" id="budget" name="buget">
+            <label for="max_t">Enter maximum fMRI scan time</label>
+            <input type="number" id="max_t" name="max_t">
+            <button id="btn">Calculate optimal design</button>
             <p id="result">Your age is 21 years old</p>
         </div>
     </div>

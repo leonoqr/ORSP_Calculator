@@ -140,7 +140,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       if (efffMRITime >= parseFloat(maxTValue)) { // check if fMRI time has hit ceiling
           efffMRITime = parseFloat(maxTValue); 
       }
-effScanTime = efffMRITime * num_Ppt;
+      effScanTime = efffMRITime * num_Ppt;
       unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
                  + efffMRITime + parseFloat(otScanTimeValue));
 

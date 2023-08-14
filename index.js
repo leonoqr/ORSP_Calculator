@@ -27,39 +27,49 @@ function getParams() {
   const maxSValue = maxS_El.value;
   // Display error message if any values are blank
   if (budgetValue === "") {
-    alert("Please enter a budget");
+      alert("Please enter a budget");
   } else if (maxTValue === "") {
-    alert("Please enter maximum fMRI scan time");
+      alert("Please enter maximum fMRI scan time");
   } else if (minTValue === "") {
-    alert("Please enter minimum FMRI scan time"); // must be less than max scan time
+      alert("Please enter minimum fMRI scan time");
   } else if (ScanItvlValue === "") {
-    alert("Please enter intervals which scans are priced at");
+      alert("Please enter intervals which scans are priced at");
   } else if (CostTimeValue === "") {
-    alert("Please the cost per interval");
+      alert("Please the cost per interval");
   } else if (psScanTimeValue === "") {
-    alert("Please enter per-session overhead scan time");
+      alert("Please enter per-session overhead scan time");
   } else if (otScanTimeValue === "") {
-    alert("Please enter one-time overhead scan time");
+      alert("Please enter one-time overhead scan time");
   } else if (PptCostValue === "") {
-    alert("Please cost per participant");
+      alert("Please cost per participant");
   } else if (SsnCostValue === "") {
-    alert("Please cost per session");
+      alert("Please cost per session");
   } else if (maxSValue === "") {
-    alert("Please enter maximum scan time per session"); // cannot be less than min scan interval
+      alert("Please enter maximum scan time per session"); 
+  } 
+  // Display error message if any values are implausible
+  else if (parseFloat(budgetValue) < parseFloat(CostTimeValue)) {
+      alert(`ERROR: Budget ($${budgetValue}) is less than cost of 1 scan session ($${CostTimeValue})`); 
+  } else if (parseFloat(maxTValue) < parseFloat(minTValue)) {
+      alert(`ERROR: Maximum fMRI scan time (${maxTValue} min) is less than minimum fMRI scan time (${minTValue} min)`);
+  } else if (parseFloat(maxSValue) < parseFloat(ScanItvlValue)) {
+      alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than scan time interval (${ScanItvlValue} min). Please set maximum scan time to be same as scan time interval (We understand that you don't need to use the whole session but this causes a bug in the code.`);
+  } else if (parseFloat(maxSValue) < parseFloat(psScanTimeValue)) {
+      alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
   } else {
-    // calculate effective scan time
-    const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, revised_Cost] =
+      // calculate effective scan time
+      const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, revised_Cost] =
                           getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, maxSValue);
-    resultEl.innerText = `Number of participants: ${num_Ppt}
-                          fMRI scan time per participant (across all sessions): ${fMRITime} mins
-                          Effective fMRI total scan time: ${effScanTime} mins
+      resultEl.innerText = `Number of participants: ${num_Ppt}
+                            fMRI scan time per participant (across all sessions): ${fMRITime} mins
+                            Effective fMRI total scan time: ${effScanTime} mins
 
-                          Optimal study design: 
-                          ${NumSessions} session(s)
-                          ${TotalDuration} min of scanning per participant (across all sessions)
-                          $${revised_Cost} is the revised cost estimate`;
+                            Optimal study design: 
+                            ${NumSessions} session(s)
+                            ${TotalDuration} min of scanning per participant (across all sessions)
+                            $${revised_Cost} is the revised cost estimate`;
   }
 }
 

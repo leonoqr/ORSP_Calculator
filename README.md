@@ -1,3 +1,10 @@
-# ORSP_Calculator
+# ORSP Calculator
 
-Temporary folder to test calculator. Initial code is from: https://github.com/sahandghavidel/HTML-CSS-JavaScript-projects-for-beginners/tree/main/projects/age-calculator
+## Reference
+To be filled.
+
+## Description
+To be filled.
+
+## Bugs and Questions
+Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com.

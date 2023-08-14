@@ -48,63 +48,109 @@ function getParams() {
     alert("Please enter maximum scan time per session"); // cannot be less than min scan interval
   } else {
     // calculate effective scan time
-    const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime] =
+    const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, revised_Cost] =
                           getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, maxSValue);
-    resultEl.innerText = `Number of subjects: ${num_Ppt}
-                          Effective fMRI total scan time: ${effScanTime}
+    resultEl.innerText = `Number of participants: ${num_Ppt}
+                          fMRI scan time per participant (across all sessions): ${fMRITime} mins
+                          Effective fMRI total scan time: ${effScanTime} mins
 
                           Optimal study design: 
                           ${NumSessions} session(s)
-                          ${TotalDuration} min of scanning per participant
-                          ${fMRITime} min of fMRI across sessions`;
+                          ${TotalDuration} min of scanning per participant (across all sessions)
+                          $${revised_Cost} is the revised cost estimate`;
   }
 }
 
 function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, maxSValue) {
-  // start with one session
-  let NumSessions = 1;
-  // find total time needed per participant using minimum scan time
-  let TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(minTValue)
-                    + parseFloat(otScanTimeValue);
-  let SessionDuration_Needed = TotalDuration;
-  // find number of intervals needed
-  let Itvls_Needed = Math.ceil((SessionDuration_Needed / parseFloat(ScanItvlValue)));
-  let Itvls_Scanned = Itvls_Needed;
+  // initialize variables
+  let num_Ppt = 0; 
+  let num_Ppt_sav = 0; 
+  let effScanTime = 0;
+  let effScanTime_sav = 0;
+  let NumSessions = 0;
+  let NumSessions_sav = 0;
+  let ScanDuration = 0;
+  let ScanDuration_sav = 0;
+  let TotalDuration = 0;
+  let SessionDuration_Needed = 0;
+  let Itvls_Needed = 0;
+  let Itvls_Scanned = 0;
+  let PxperPpt = 0;
+  let revised_Cost = 0;
+  let revised_Cost_sav = 0;
+  let fMRITime = parseFloat(minTValue); // start with minimum scan time 
+  let fMRITime_sav = fMRITime;
+  let efffMRITime = parseFloat(minTValue);
+
   // find the number of intervals a participant can handle
-  let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue)));
+  let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue))); 
 
-  // if you need more intervals than participant can handle, increase NumSessions
-  while (Itvls_Needed > maxItvl) {
-    NumSessions++;
-    // update total time needed per participant using minimum scan time
-    TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(minTValue)
-                  + parseFloat(otScanTimeValue);
-    // assume you scan maximum permissble time for previous sessions, calculate how much additional time is needed
-    SessionDuration_Needed = TotalDuration - ((NumSessions - 1) * maxItvl * parseFloat(ScanItvlValue));
-    // find remaining number of intervals needed
-    Itvls_Needed = Math.ceil(SessionDuration_Needed / parseFloat(ScanItvlValue));
-    Itvls_Scanned = (((NumSessions - 1) * maxItvl) + Itvls_Needed);
-  }
+  while (effScanTime >= effScanTime_sav) {
+      // start with one session      
+      NumSessions = 1;
 
-  // find cost per participant in terms of all participant costs and session costs
-  let PxperPpt = (Itvls_Scanned * parseFloat(CostTimeValue)) + parseFloat(PptCostValue)
+      // find total time and number of scan intervals needed per participant
+      TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
+                    + parseFloat(otScanTimeValue);
+      SessionDuration_Needed = TotalDuration;
+      Itvls_Needed = Math.ceil((SessionDuration_Needed / parseFloat(ScanItvlValue)));
+      Itvls_Scanned = Itvls_Needed;
+
+      // if you need more intervals than participant can handle, increase NumSessions
+      while (Itvls_Needed > maxItvl) {
+          NumSessions++;
+          // update total time needed per participant using minimum scan time
+          TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
+                        + parseFloat(otScanTimeValue);
+         // assume you scan maximum permissble time for previous sessions, calculate how much additional time is needed
+          SessionDuration_Needed = TotalDuration - ((NumSessions - 1) * maxItvl * parseFloat(ScanItvlValue));
+          // find remaining number of intervals needed
+          Itvls_Needed = Math.ceil(SessionDuration_Needed / parseFloat(ScanItvlValue));
+          Itvls_Scanned = (((NumSessions - 1) * maxItvl) + Itvls_Needed);
+      }
+
+      // find cost per participant in terms of all participant costs and session costs
+      PxperPpt = (Itvls_Scanned * parseFloat(CostTimeValue)) + parseFloat(PptCostValue)
                + (parseFloat(SsnCostValue) * NumSessions);
 
-  // find number of participants you can afford using minimum scan time
-  let num_Ppt = Math.floor(parseFloat(budgetValue) / PxperPpt);
+      // find number of participants you can afford 
+      num_Ppt = Math.floor(parseFloat(budgetValue) / PxperPpt);
+      revised_Cost = num_Ppt * PxperPpt;
 
-  // calculate other values based on the calculated num_Ppt
-  let ScanDuration = Itvls_Scanned * parseFloat(ScanItvlValue);
-  let fMRITime = parseFloat(minTValue) + ScanDuration - TotalDuration;
-  let effScanTime = fMRITime * num_Ppt;
+      // calculate other values based on the calculated num_Ppt
+      ScanDuration = Itvls_Scanned * parseFloat(ScanItvlValue);
+      efffMRITime = fMRITime + ScanDuration - TotalDuration; // assume extra time used for fMRI
+      effScanTime = efffMRITime * num_Ppt;
 
-  // find number of participants you can afford using maximum scan time
+      // check if fMRI time has hit ceiling
+      if (efffMRITime >= parseFloat(maxTValue)) { 
+          efffMRITime = parseFloat(maxTValue); 
+      }
 
-  return [num_Ppt, effScanTime, NumSessions, ScanDuration, fMRITime];
+      // save values if this effective scan time is the new highest
+      if (effScanTime > effScanTime_sav) {
+          num_Ppt_sav = num_Ppt
+          effScanTime_sav = effScanTime;
+          NumSessions_sav = NumSessions;
+          ScanDuration_sav = ScanDuration;
+          fMRITime_sav = efffMRITime;
+          revised_Cost_sav = revised_Cost;
+      } else {
+          break;
+      }
+
+      // check if scan time can be increased
+      if (efffMRITime < parseFloat(maxTValue)) { 
+          fMRITime = efffMRITime + parseFloat(ScanItvlValue) - psScanTimeValue; // add one scan interval
+      } 
+
+  }
+
+  return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, revised_Cost_sav];
 }
 
 btnEl.addEventListener("click", getParams);

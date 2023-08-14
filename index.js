@@ -58,7 +58,7 @@ function getParams() {
       alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
   } else {
       // calculate effective scan time
-      const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, revised_Cost] =
+      const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, unusedTime, revised_Cost] =
                           getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, maxSValue);
@@ -69,6 +69,7 @@ function getParams() {
                             Optimal study design: 
                             ${NumSessions} session(s)
                             ${TotalDuration} min of scanning per participant (across all sessions)
+                            ${unusedTime} min of unused scan time
                             $${revised_Cost} is the revised cost estimate`;
   }
 }
@@ -95,6 +96,8 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   let fMRITime = parseFloat(minTValue); // start with minimum scan time 
   let fMRITime_sav = fMRITime;
   let efffMRITime = parseFloat(minTValue);
+  let unusedTime = 0;
+  let unusedTime_sav = 0;
 
   // find the number of intervals a participant can handle
   let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue))); 
@@ -140,6 +143,8 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       if (efffMRITime >= parseFloat(maxTValue)) { 
           efffMRITime = parseFloat(maxTValue); 
       }
+      unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
+                 + efffMRITime + parseFloat(otScanTimeValue));
 
       // save values if this effective scan time is the new highest
       if (effScanTime > effScanTime_sav) {
@@ -149,6 +154,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
           ScanDuration_sav = ScanDuration;
           fMRITime_sav = efffMRITime;
           revised_Cost_sav = revised_Cost;
+          unusedTime_sav = unusedTime;
       } else {
           break;
       }
@@ -160,7 +166,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
 
   }
 
-  return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, revised_Cost_sav];
+  return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
 
 btnEl.addEventListener("click", getParams);

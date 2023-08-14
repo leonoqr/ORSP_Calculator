@@ -137,12 +137,10 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       // calculate other values based on the calculated num_Ppt
       ScanDuration = Itvls_Scanned * parseFloat(ScanItvlValue);
       efffMRITime = fMRITime + ScanDuration - TotalDuration; // assume extra time used for fMRI
-      effScanTime = efffMRITime * num_Ppt;
-
-      // check if fMRI time has hit ceiling
-      if (efffMRITime >= parseFloat(maxTValue)) { 
+      if (efffMRITime >= parseFloat(maxTValue)) { // check if fMRI time has hit ceiling
           efffMRITime = parseFloat(maxTValue); 
       }
+effScanTime = efffMRITime * num_Ppt;
       unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
                  + efffMRITime + parseFloat(otScanTimeValue));
 

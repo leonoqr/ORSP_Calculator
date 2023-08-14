@@ -1,7 +1,7 @@
 # ORSP Calculator
 
 ## Reference
-To be filled.
+MRI meets economics: Balancing sample size and scan duration.
 
 ## Description
 To be filled.

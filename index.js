@@ -30,36 +30,153 @@ function getNTParams() {
       alert("Please enter T");
   } 
 
-    //const filePath = 'Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
-    const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
-
-    fetch(filePath)
-      .then(response => response.arrayBuffer())
-      .then(buffer => {
-        const data = new Uint8Array(buffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-
-        // Access and use the values from specific cells
-        const cellA1Value = worksheet['A1'] ? worksheet['A1'].v : 'Cell A1 not found';
-        const cellB2Value = worksheet['B2'] ? worksheet['B2'].v : 'Cell B2 not found';
-
-        // Use the values as needed
-        console.log('Value in A1:', cellA1Value);
-        console.log('Value in B2:', cellB2Value);
+  const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
+  fetch(filePath)
+      .then(response => {
+      if (!response.ok) {
+          throw new Error(`Failed to fetch file (HTTP ${response.status})`);
+      }
+      return response.arrayBuffer();
       })
+      .then(buffer => {
+      const data = new Uint8Array(buffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      // calculate values for each phenotype
+      // Prediction accuracy
+      let acc = []; {
+          // Loop through each row (2 to 18) for ABCD
+          let sheetName = workbook.SheetNames[0];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 18; row++) {
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              acc.push(calcAcc(K1.v,K2.v,NValue,TValue))
+          }
+      }{
+          // Loop through each row (2 to 20) for HCP
+          let sheetName = workbook.SheetNames[3];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 20; row++) {
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              acc.push(calcAcc(K1.v,K2.v,NValue,TValue))
+          }
+      }
+
+      const mean_pa = acc.length > 0 ? acc.reduce((a, b) => a + b) / acc.length : 0;
+      // Round off the mean accuracy to 2 significant figures
+      const rounded_mean_pa  = parseFloat(mean_pa.toPrecision(2));
+      // Calculate confidence interval (assuming a 95% confidence level)
+      const standardDeviation = Math.sqrt(acc.reduce((sum, value) => sum + (value - mean_pa) ** 2, 0) / (acc.length - 1));
+      const marginOfError = 1.96 * (standardDeviation / Math.sqrt(acc.length));
+      const rounded_margin  = parseFloat(marginOfError.toPrecision(2));
+      // Calculate median
+      const sortedAcc = acc.slice().sort((a, b) => a - b);
+      const median = sortedAcc.length % 2 === 0
+      ? (sortedAcc[sortedAcc.length / 2 - 1] + sortedAcc[sortedAcc.length / 2]) / 2
+      : sortedAcc[Math.floor(sortedAcc.length / 2)];
+      const rounded_median  = parseFloat(median.toPrecision(2));
+
+      // univariate BWAS
+      let u_rel = []; {
+          // Loop through each row (2 to 18) for ABCD
+          let sheetName = workbook.SheetNames[1];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 18; row++) {
+              const K0 = worksheet[`B${row}`]
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              u_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
+          }
+      }{
+          // Loop through each row (2 to 20) for HCP
+          let sheetName = workbook.SheetNames[4];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 20; row++) {
+              const K0 = worksheet[`B${row}`]
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              u_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
+          }
+      }
+
+      const mean_u_rel = u_rel.length > 0 ? u_rel.reduce((a, b) => a + b) / u_rel.length : 0;
+      // Round off the mean accuracy to 2 significant figures
+      const rounded_mean_u_rel  = parseFloat(mean_u_rel.toPrecision(2));
+      // Calculate confidence interval (assuming a 95% confidence level)
+      const standardDeviation_ub = Math.sqrt(u_rel.reduce((sum, value) => sum + (value - mean_u_rel) ** 2, 0) / (u_rel.length - 1));
+      const marginOfError_ub = 1.96 * (standardDeviation_ub / Math.sqrt(u_rel.length));
+      const rounded_margin_ub  = parseFloat(marginOfError_ub.toPrecision(2));
+      // Calculate median
+      const sorted_u_rel = u_rel.slice().sort((a, b) => a - b);
+      const median_u_rel = sorted_u_rel.length % 2 === 0
+      ? (sorted_u_rel[sorted_u_rel.length / 2 - 1] + sorted_u_rel[sorted_u_rel.length / 2]) / 2
+      : sorted_u_rel[Math.floor(sorted_u_rel.length / 2)];
+      const rounded_median_u_rel  = parseFloat(median_u_rel.toPrecision(2));
+
+      // multivariate BWAS
+      let m_rel = []; {
+          // Loop through each row (2 to 18) for ABCD
+          let sheetName = workbook.SheetNames[2];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 18; row++) {
+              const K0 = worksheet[`B${row}`]
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              m_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
+          }
+      }{
+          // Loop through each row (2 to 20) for HCP
+          let sheetName = workbook.SheetNames[5];
+          let worksheet = workbook.Sheets[sheetName];
+          for (let row = 2; row <= 20; row++) {
+              const K0 = worksheet[`B${row}`]
+              const K1 = worksheet[`C${row}`]
+              const K2 = worksheet[`D${row}`]
+              m_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
+          }
+      }
+
+      const mean_m_rel = m_rel.length > 0 ? m_rel.reduce((a, b) => a + b) / m_rel.length : 0;
+      // Round off the mean accuracy to 2 significant figures
+      const rounded_mean_m_rel  = parseFloat(mean_m_rel.toPrecision(2));
+      // Calculate confidence interval (assuming a 95% confidence level)
+      const standardDeviation_mb = Math.sqrt(m_rel.reduce((sum, value) => sum + (value - mean_m_rel) ** 2, 0) / (m_rel.length - 1));
+      const marginOfError_mb = 1.96 * (standardDeviation_mb / Math.sqrt(m_rel.length));
+      const rounded_margin_mb  = parseFloat(marginOfError_mb.toPrecision(2));
+      // Calculate median
+      const sorted_m_rel = m_rel.slice().sort((a, b) => a - b);
+      const median_m_rel = sorted_m_rel.length % 2 === 0
+      ? (sorted_m_rel[sorted_m_rel.length / 2 - 1] + sorted_m_rel[sorted_m_rel.length / 2]) / 2
+      : sorted_m_rel[Math.floor(sorted_m_rel.length / 2)];
+      const rounded_median_m_rel  = parseFloat(median_m_rel.toPrecision(2));
+      
+      // Update values
+      AccRelEl.innerText = `Mean prediction accuracy: ${rounded_mean_pa} ± ${rounded_margin}
+        Median prediction accuracy: ${rounded_median}
+        Mean univariate BWAS reliability: ${rounded_mean_u_rel} ± ${rounded_margin_ub}
+        Median univariate BWAS reliability: ${rounded_median_u_rel}
+        Mean multivariate BWAS reliability: ${rounded_mean_m_rel} ± ${rounded_margin_mb}
+        Median multivariate BWAS reliability: ${rounded_median_m_rel}`;
+    })
       .catch(error => {
         console.error('Error reading Excel file:', error.message);
       });
+}
 
-  // Update values
-  AccRelEl.innerText = `Mean prediction accuracy: ${NValue}
-            Median prediction accuracy: ${TValue}
-            Mean univariate BWAS reliability: Uncalculated
-            Median univariate BWAS reliability: Uncalculated
-            Mean multivariate BWAS reliability: Uncalculated
-            Median multivariate BWAS reliability: Uncalculated`;
+function calcAcc(K1,K2,N,T) {
+  // initialize variables
+  let acc = 0; 
+  acc = Math.sqrt(1/(1 + (K1/N) + ((K2)/(N*T))))
+  return acc
+}
+
+function calcRel(K0,K1,K2,N,T) {
+  // initialize variables
+  let rel = 0; 
+  rel = K0 / (K0 + (1/(N/2)) * (1 - ((2*K1)/(1+(K2/T)))))
+  return rel
 }
 
 function getBudgetParams() {

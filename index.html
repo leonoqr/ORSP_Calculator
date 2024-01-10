@@ -8,10 +8,50 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Section 1: Introduction -->
     <div class="container">
-    <h1>MRI Budget Calculator</h1>
-    <p> Reference: MRI meets economics: Balancing sample size and scan duration. </br>
-        Bugs and questions: Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com. </p>
+        <section id="section1">
+            <h1>Ooi2024 ORSP Calculator</h1>
+            <p> Reference: MRI meets economics: Balancing sample size and scan duration. </br>
+            Bugs and questions: Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com. </p>
+        </section>
+        <button id="buttonContainer2"">Accuracy and Reliability Calculator</button>
+        <button id="buttonContainer4">Budget and Scan Billing Calculator</button>
+    </div>
+
+    <!-- Section 2: Accuracy and Reliability Calculator -->
+    <div class="container" id="container2">
+        <section id="section2">
+            <h1>Accuracy and Reliability Calculator</h1>
+            <p> This calculator provides the mean (± 95% confidence intervals) and median of prediction accuracy (normalized by maximum achievable prediction accuracy (K0), and split-half reliability of univariate and multivariate BWAS.</p>
+                <div class="container">
+                    <div class="input-container">
+                        <label for="N">Number of participants (N):</label>
+                        <input type="number" id="N" name="N">
+                        </br>
+                        <label for="T">Scan time per participant in minutes (T):</label>
+                        <input type="number" id="T" name="T">
+                    </div>
+                    <button id="B1">Calculate achievable accuracy and reliability</button>
+                </div>
+        </section>
+    </div>
+
+    <div class="container">
+        <p id="AccRel_Results">
+            Mean prediction accuracy: Uncalculated<br>
+            Median prediction accuracy: Uncalculated<br>
+            Mean univariate BWAS reliability: Uncalculated<br>
+            Median univariate BWAS reliability: Uncalculated<br>
+            Mean multivariate BWAS reliability: Uncalculated<br>
+            Median multivariate BWAS reliability: Uncalculated
+        </p>
+    </div>
+
+    <!-- Section 3: Budget and Scan Billing Calculator -->
+    <div class="container" id="container4">
+    <h1>Budget and Scan Billing Calculator</h1>
+    <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs.</p>
         <div class="container">
             <div class="input-container">
                 <h2>1. Monetary constraints</h2>
@@ -71,11 +111,11 @@
             <p> Researcher might want to vary this based on the population being studied (e.g. children may only be able to tolerate short scan times, whereas PhD students needing to graduate might be able to tolerate very long scan times) </p>
             </div>
         </div>
-        <button id="btn">Calculate optimal design</button>
+        <button id="B2">Calculate budgeting and scanning design</button>
     </div>
 
     <div class="container">
-        <p id="result">
+        <p id="Budget_Results">
             Number of subjects: Uncalculated<br>
             fMRI scan time per participant (across all sessions): Uncalculated<br>
             Effective total scan time: Uncalculated <br> <br>
@@ -83,6 +123,8 @@
         </p>
     </div>
 
+    <!-- Scripts for running site -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
     <script src="index.js"></script>
 </body>
 </html>

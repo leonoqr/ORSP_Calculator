@@ -1,5 +1,10 @@
 // Define all factors
-const btnEl = document.getElementById("btn");
+const jump2Cont2 = document.getElementById('buttonContainer2');
+const jump2Cont4 = document.getElementById('buttonContainer4');
+const B1 = document.getElementById("B1");
+const B2 = document.getElementById("B2");
+const N_El = document.getElementById("N");
+const T_El = document.getElementById("T");
 const budget_El = document.getElementById("budget");
 const maxT_El = document.getElementById("maxT");
 const minT_El = document.getElementById("minT");
@@ -10,11 +15,55 @@ const otScanTime_El = document.getElementById("otScanTime");
 const PptCost_El = document.getElementById("PptCost");
 const SsnCost_El = document.getElementById("SsnCost");
 const maxS_El = document.getElementById("maxS");
-const resultEl = document.getElementById("result");
+const AccRelEl = document.getElementById("AccRel_Results");
+const resultEl = document.getElementById("Budget_Results");
 
 // Define functions
-function getParams() {
-  // load function values from form
+function getNTParams() {
+  // load function values from accuracy calculator form
+  const NValue = N_El.value;
+  const TValue = T_El.value;
+  // Display error message if any values are blank
+  if (NValue == "") {
+      alert("Please enter N");
+  } else if (TValue == "") {
+      alert("Please enter T");
+  } 
+
+    //const filePath = 'Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
+    const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
+
+    fetch(filePath)
+      .then(response => response.arrayBuffer())
+      .then(buffer => {
+        const data = new Uint8Array(buffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Access and use the values from specific cells
+        const cellA1Value = worksheet['A1'] ? worksheet['A1'].v : 'Cell A1 not found';
+        const cellB2Value = worksheet['B2'] ? worksheet['B2'].v : 'Cell B2 not found';
+
+        // Use the values as needed
+        console.log('Value in A1:', cellA1Value);
+        console.log('Value in B2:', cellB2Value);
+      })
+      .catch(error => {
+        console.error('Error reading Excel file:', error.message);
+      });
+
+  // Update values
+  AccRelEl.innerText = `Mean prediction accuracy: ${NValue}
+            Median prediction accuracy: ${TValue}
+            Mean univariate BWAS reliability: Uncalculated
+            Median univariate BWAS reliability: Uncalculated
+            Mean multivariate BWAS reliability: Uncalculated
+            Median multivariate BWAS reliability: Uncalculated`;
+}
+
+function getBudgetParams() {
+  // load function values from budget calculator form
   const budgetValue = budget_El.value;
   const maxTValue = maxT_El.value;
   const minTValue = minT_El.value;
@@ -167,4 +216,23 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
 
-btnEl.addEventListener("click", getParams);
+function jumpToSection(containerId) {
+    // Function to scroll to a specific container
+    var container = document.getElementById(containerId);
+
+    if (container) {
+        // Scroll to the top of the container smoothly
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Add all event listeners
+jump2Cont2.addEventListener('click', function () {
+    jumpToSection('container2');
+});
+
+jump2Cont4.addEventListener('click', function () {
+    jumpToSection('container4');
+});
+B1.addEventListener("click", getNTParams);
+B2.addEventListener("click", getBudgetParams);

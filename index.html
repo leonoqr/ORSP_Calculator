@@ -8,59 +8,109 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Section 1: Introduction -->
-    <div class="container">
-        <section id="section1">
-            <h1>Ooi2024 ORSP Calculator</h1>
-            <p> Reference: MRI meets economics: Balancing sample size and scan duration. </br>
-            Bugs and questions: Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com. </p>
-        </section>
-        <button id="buttonContainer2"">Accuracy and Reliability Calculator</button>
-        <button id="buttonContainer4">Budget and Scan Billing Calculator</button>
+    <!-- Menu -->
+    <div class="menu-bar">
+        <ul>
+            <li><a onclick="jumpToSection('about')">About</a></li>
+            <li><a onclick="jumpToSection('acccalc')">Accuracy and Reliability Calculator</a></li>
+            <li><a onclick="jumpToSection('budgetcalc')">Budget and Scan Billing Calculator</a></li>
+            <li><a onclick="jumpToSection('bugs')">Bugs and Questions</a></li>
+        </ul>
     </div>
+
+    <!-- Section 1: Introduction -->
+    <section id="about">
+    <div class="container" id="container1">
+        <h1>Ooi2024 ORSP Calculator</h1><br>
+        <p> Reference: MRI meets economics: Balancing sample size and scan duration.</p><br>
+        <p> Some text with explanation.</p><br>
+    </div>
+    </section>
 
     <!-- Section 2: Accuracy and Reliability Calculator -->
-    <div class="container" id="container2">
-        <section id="section2">
-            <h1>Accuracy and Reliability Calculator</h1>
-            <p> This calculator provides the mean (± 95% confidence intervals) and median of prediction accuracy (normalized by maximum achievable prediction accuracy (K0), and split-half reliability of univariate and multivariate BWAS.</p>
-                <div class="container">
-                    <div class="input-container">
-                        <label for="N">Number of participants (N):</label>
-                        <input type="number" id="N" name="N">
-                        </br>
-                        <label for="T">Scan time per participant in minutes (T):</label>
-                        <input type="number" id="T" name="T">
-                    </div>
-                    <button id="B1">Calculate achievable accuracy and reliability</button>
+    <section id="acccalc">
+    <!-- Calculator Description -->
+    <div class="flex-container">
+        <div class="container third_container">
+            <h1>Accuracy and Reliability Calculator</h1><br>
+            <p> This calculator provides the mean (± 95% confidence intervals) and median of prediction accuracy (normalized by maximum achievable prediction accuracy (K0), and split-half reliability of univariate and multivariate BWAS.</p> <br>
+            <label for="N">Number of participants (N):</label>
+            <input type="number" id="N" name="N" value="792" oninput="updateSlider(this.value)"> <br>
+            <input type="range" id="NSlider" min="0" max="99999" step="1" value="792" oninput="updateInputBox(this.value)"><br>
+            <label for="T">Scan time per participant in minutes (T):</label> 
+            <input type="number" id="T" name="T" value="58" oninput="updateSlider(this.value)"> <br>
+            <input type="range" id="TSlider" min="0" max="999" step="1" value="58" oninput="updateInputBox(this.value)"><br>
+        </div>
+
+        <!-- Switching Container Area -->
+        <div class="container-area">
+            <div class="tabs">
+                <button onclick="openContainer('PredAcc', this)">Prediction Accuracy</button>
+                <button onclick="openContainer('uniRel', this)">Univariate BWAS Reliability</button>
+                <button onclick="openContainer('multiRel', this)">Multivariate BWAS Reliability</button>
+            </div>
+
+            <div id="PredAcc" class="container-content">
+		<div class="short_container">
+                    <div id="PredHist"></div> <br>
+                    <p id="Acc_Results">
+                    Mean prediction accuracy: Uncalculated<br>
+                    Median prediction accuracy: Uncalculated<br>
+                    </p>
+		</div>
+		<div class="short_container">
+		    <div class="half-container">
+		        <p> ABCD Phenotypes </p>
+		        <div id="ABCD_accTable"></div>
+	 	    </div>
+		    <div class="half-container">
+		        <p> HCP Phenotypes </p>
+		        <div id="HCP_accTable"></div>
+		    </div>
                 </div>
-        </section>
-    </div>
+            </div>
 
-    <div class="container">
-        <p id="AccRel_Results">
-            Mean prediction accuracy: Uncalculated<br>
-            Median prediction accuracy: Uncalculated<br>
-            Mean univariate BWAS reliability: Uncalculated<br>
-            Median univariate BWAS reliability: Uncalculated<br>
-            Mean multivariate BWAS reliability: Uncalculated<br>
-            Median multivariate BWAS reliability: Uncalculated
-        </p>
-    </div>
-
-    <!-- Section 3: Budget and Scan Billing Calculator -->
-    <div class="container" id="container4">
-    <h1>Budget and Scan Billing Calculator</h1>
-    <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs.</p>
-        <div class="container">
-            <div class="input-container">
-                <h2>1. Monetary constraints</h2>
-                <label for="budget"> Enter your budget: </label>
-                <input type="number" id="budget" name="budget">
+            <div id="uniRel" class="container-content">
+                <div class="short_container">
+                    <div id="uRelHist"></div> <br>
+                    <p id="uniRel_Results">
+                    Mean univariate BWAS reliability: Uncalculated<br>
+                    Median univariate BWAS reliability: Uncalculated<br>
+                    </p>
+		</div>
+		<div class="short_container">
+		    <div class="half-container">
+		        <p> ABCD Phenotypes </p>
+		        <div id="ABCD_uRelTable"></div>
+	 	    </div>
+		    <div class="half-container">
+		        <p> HCP Phenotypes </p>
+		        <div id="HCP_uRelTable"></div>
+		    </div>
+                </div>
+            </div>
+            <div id="multiRel" class="container-content">
+                <p id="multiRel_Results">
+                Mean multivariate BWAS reliability: Uncalculated<br>
+                Median multivariate BWAS reliability: Uncalculated
+                </p>
+                <div id="mRelHist"></div>
             </div>
         </div>
-        <div class="container">
-            <div class="input-container">
+    </div>
+    </section>
+
+    <!-- Section 3: Budget and Scan Billing Calculator -->
+    <section id="budgetcalc">
+    <div class="container" id="container4">
+        <h1>Budget and Scan Billing Calculator</h1>
+        <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs.</p>
+        <div class="input-container">
+            <h2>1. Monetary constraints</h2>
+            <label for="budget"> Enter your budget: </label>
+            <input type="number" id="budget" name="budget">
+        </div>
+        <div class="input-container">
             <h2>2. fMRI time range</h2>
             <label for="maxT">Maximum fMRI scan time (mins): </label>
             <input type="number" id="maxT" name="maxT">
@@ -68,10 +118,8 @@
             <label for="minT">Minimum fMRI scan time (mins): </label>
             <input type="number" id="minT" name="minT">
             <p> Amount of fMRI scan time where researchers feel confident they will have minimum amount of usable data. E.g. if researcher is scanning kids, they might want to set this to a higher amount as more frames will have to be discared due to motion as compared to adults.</p>
-            </div>
         </div>
-        <div class="container">
-            <div class="input-container">
+        <div class="input-container">
             <h2>3. MRI provider constraints</h2>
             <label for="ScanItvl">Enter scan interval (mins): </label>
             <input type="number" id="ScanItvl" name="ScanItvl">
@@ -79,10 +127,8 @@
             <label for="CostTime">MRI cost per time: </label>
             <input type="number" id="CostTime" name="CostTime">
             <p> This should not just include how much MRI provider charges, but also manpower costs (e.g. if the research assistant needs to be present during the scan).</p>
-            </div>
         </div>
-        <div class="container">
-            <div class="input-container">
+        <div class="input-container">
             <h2>4. Overhead MRI time</h2>
             <label for="psScanTime">Per-session scan overhead (mins): </label>
             <input type="number" id="psScanTime" name="psScanTime">
@@ -90,10 +136,8 @@
             <label for="otScanTime">One-time scan overhead (mins): </label>
             <input type="number" id="otScanTime" name="otScanTime">
             <p> Scan time due to other sequences being collected, or other one-time events (e.g. Diffusion MRI, body imaging, practice scan to acclimatize participant). </p>
-            </div>
         </div>
-        <div class="container">
-            <div class="input-container">
+        <div class="input-container">
             <h2>5. Overhead non-MRI logistics cost</h2>
             <label for="PptCost">Cost per subject: </label>
             <input type="number" id="PptCost" name="PptCost">
@@ -101,15 +145,12 @@
             <label for="SsnCost">Cost per session: </label>
             <input type="number" id="SsnCost" name="SsnCost">
             <p> Logistics related to per session costs (e.g. time and effort to coordinate with participants, meeting and greeting, pre-scan safety checks, transfer of data to database, paperwork etc).</p>
-            </div>
         </div>
-        <div class="container">
-            <div class="input-container">
+        <div class="input-container">
             <h2>6. Participant scan time constraints</h2>
             <label for="maxS">Enter maximum scan time per session (mins): </label>
             <input type="number" id="maxS" name="maxS">
             <p> Researcher might want to vary this based on the population being studied (e.g. children may only be able to tolerate short scan times, whereas PhD students needing to graduate might be able to tolerate very long scan times) </p>
-            </div>
         </div>
         <button id="B2">Calculate budgeting and scanning design</button>
     </div>
@@ -122,9 +163,69 @@
             Optimal study design: To be determined
         </p>
     </div>
+    </section>
 
-    <!-- Scripts for running site -->
+    <!-- Section 4: Bugs and questions -->
+    <section id="bugs">
+    <div class="short_container">
+            <p> Bugs and questions: Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com. </p>
+    </div>
+    </section>
+
+    <!-- Include Sheetjs to read xlsx -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+    <!-- Include Plotly.js for graph plotting -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Scripts to generate values -->
     <script src="index.js"></script>
+    <!-- Script for scrolling behavior -->
+    <script>
+    function jumpToSection(containerId) {
+        var container = document.getElementById(containerId);
+
+        if (container) {
+            var offset = container.getBoundingClientRect().top + window.scrollY;
+            var margin = 50; // Adjust this value to set the margin height
+
+            // Scroll to the beginning of the container with an offset
+            window.scrollTo({ top: offset - margin, behavior: 'smooth' });
+        }
+    }
+    </script>
+    <!-- Script to link slider and input box -->
+    <script>
+    function updateInputBox(value, inputId, sliderId) {
+        document.getElementById(inputId).value = value;
+        document.getElementById(sliderId).value = value;
+        if (inputId === 'N' || inputId === 'T') {
+            getNTParams();
+        }
+    }
+
+    function updateSlider(value, inputId, sliderId) {
+        document.getElementById(inputId).value = value;
+        document.getElementById(sliderId).value = value;
+        if (inputId === 'N' || inputId === 'T') {
+            getNTParams();
+        }
+    }
+
+    // Add these event listeners to update the input box and slider when either is changed
+    document.getElementById('NSlider').addEventListener('input', function () {
+        updateInputBox(this.value, 'N', 'NSlider'); 
+    });
+
+    document.getElementById('N').addEventListener('input', function () {
+        updateSlider(this.value, 'N', 'NSlider');
+    });
+
+    document.getElementById('TSlider').addEventListener('input', function () {
+        updateInputBox(this.value, 'T', 'TSlider');
+    });
+
+    document.getElementById('T').addEventListener('input', function () {
+        updateSlider(this.value, 'T', 'TSlider');
+    });
+    </script>
 </body>
 </html>

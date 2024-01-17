@@ -1,6 +1,4 @@
 // Define all factors
-const jump2Cont2 = document.getElementById('buttonContainer2');
-const jump2Cont4 = document.getElementById('buttonContainer4');
 const B1 = document.getElementById("B1");
 const B2 = document.getElementById("B2");
 const N_El = document.getElementById("N");
@@ -15,7 +13,9 @@ const otScanTime_El = document.getElementById("otScanTime");
 const PptCost_El = document.getElementById("PptCost");
 const SsnCost_El = document.getElementById("SsnCost");
 const maxS_El = document.getElementById("maxS");
-const AccRelEl = document.getElementById("AccRel_Results");
+const AccEl = document.getElementById("Acc_Results");
+const uniEl = document.getElementById("uniRel_Results");
+const multiEl = document.getElementById("multiRel_Results");
 const resultEl = document.getElementById("Budget_Results");
 
 // Define functions
@@ -43,123 +43,35 @@ function getNTParams() {
       const workbook = XLSX.read(data, { type: 'array' });
 
       // calculate values for each phenotype
-      // Prediction accuracy
-      let acc = []; {
-          // Loop through each row (2 to 18) for ABCD
-          let sheetName = workbook.SheetNames[0];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 18; row++) {
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              acc.push(calcAcc(K1.v,K2.v,NValue,TValue))
-          }
-      }{
-          // Loop through each row (2 to 20) for HCP
-          let sheetName = workbook.SheetNames[3];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 20; row++) {
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              acc.push(calcAcc(K1.v,K2.v,NValue,TValue))
-          }
-      }
 
-      const mean_pa = acc.length > 0 ? acc.reduce((a, b) => a + b) / acc.length : 0;
-      // Round off the mean accuracy to 2 significant figures
-      const rounded_mean_pa  = parseFloat(mean_pa.toPrecision(2));
-      // Calculate confidence interval (assuming a 95% confidence level)
-      const standardDeviation = Math.sqrt(acc.reduce((sum, value) => sum + (value - mean_pa) ** 2, 0) / (acc.length - 1));
-      const marginOfError = 1.96 * (standardDeviation / Math.sqrt(acc.length));
-      const rounded_margin  = parseFloat(marginOfError.toPrecision(2));
-      // Calculate median
-      const sortedAcc = acc.slice().sort((a, b) => a - b);
-      const median = sortedAcc.length % 2 === 0
-      ? (sortedAcc[sortedAcc.length / 2 - 1] + sortedAcc[sortedAcc.length / 2]) / 2
-      : sortedAcc[Math.floor(sortedAcc.length / 2)];
-      const rounded_median  = parseFloat(median.toPrecision(2));
+      // Prediction accuracy
+      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'Acc')
+      const [mean_pa, margin_pa, median_pa] = get_averages(acc)
+      // Update text and graphs
+      AccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
+        Median prediction accuracy: ${median_pa}`;
+      plotHist('PredHist', acc)
+      drawTable('ABCD_accTable', acc, 'ABCD', ABCD_names)
+      drawTable('HCP_accTable', acc, 'HCP', HCP_names)
 
       // univariate BWAS
-      let u_rel = []; {
-          // Loop through each row (2 to 18) for ABCD
-          let sheetName = workbook.SheetNames[1];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 18; row++) {
-              const K0 = worksheet[`B${row}`]
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              u_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
-          }
-      }{
-          // Loop through each row (2 to 20) for HCP
-          let sheetName = workbook.SheetNames[4];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 20; row++) {
-              const K0 = worksheet[`B${row}`]
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              u_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
-          }
-      }
-
-      const mean_u_rel = u_rel.length > 0 ? u_rel.reduce((a, b) => a + b) / u_rel.length : 0;
-      // Round off the mean accuracy to 2 significant figures
-      const rounded_mean_u_rel  = parseFloat(mean_u_rel.toPrecision(2));
-      // Calculate confidence interval (assuming a 95% confidence level)
-      const standardDeviation_ub = Math.sqrt(u_rel.reduce((sum, value) => sum + (value - mean_u_rel) ** 2, 0) / (u_rel.length - 1));
-      const marginOfError_ub = 1.96 * (standardDeviation_ub / Math.sqrt(u_rel.length));
-      const rounded_margin_ub  = parseFloat(marginOfError_ub.toPrecision(2));
-      // Calculate median
-      const sorted_u_rel = u_rel.slice().sort((a, b) => a - b);
-      const median_u_rel = sorted_u_rel.length % 2 === 0
-      ? (sorted_u_rel[sorted_u_rel.length / 2 - 1] + sorted_u_rel[sorted_u_rel.length / 2]) / 2
-      : sorted_u_rel[Math.floor(sorted_u_rel.length / 2)];
-      const rounded_median_u_rel  = parseFloat(median_u_rel.toPrecision(2));
+      const [u_rel, , ] = ReadExcel(workbook, 1, 4,NValue,TValue,'Rel')
+      const [mean_urel, margin_urel, median_urel] = get_averages(u_rel)
+      // Update text and graphs
+      uniEl.innerText = `Mean univariate BWAS reliability: ${mean_urel} ± ${margin_urel}
+        Median univariate BWAS reliability: ${median_urel}`;
+      plotHist('uRelHist', u_rel)
+      drawTable('ABCD_uRelTable', u_rel, 'ABCD', ABCD_names)
+      drawTable('HCP_uRelTable', u_rel, 'HCP', HCP_names)
 
       // multivariate BWAS
-      let m_rel = []; {
-          // Loop through each row (2 to 18) for ABCD
-          let sheetName = workbook.SheetNames[2];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 18; row++) {
-              const K0 = worksheet[`B${row}`]
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              m_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
-          }
-      }{
-          // Loop through each row (2 to 20) for HCP
-          let sheetName = workbook.SheetNames[5];
-          let worksheet = workbook.Sheets[sheetName];
-          for (let row = 2; row <= 20; row++) {
-              const K0 = worksheet[`B${row}`]
-              const K1 = worksheet[`C${row}`]
-              const K2 = worksheet[`D${row}`]
-              m_rel.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue))
-          }
-      }
-
-      const mean_m_rel = m_rel.length > 0 ? m_rel.reduce((a, b) => a + b) / m_rel.length : 0;
-      // Round off the mean accuracy to 2 significant figures
-      const rounded_mean_m_rel  = parseFloat(mean_m_rel.toPrecision(2));
-      // Calculate confidence interval (assuming a 95% confidence level)
-      const standardDeviation_mb = Math.sqrt(m_rel.reduce((sum, value) => sum + (value - mean_m_rel) ** 2, 0) / (m_rel.length - 1));
-      const marginOfError_mb = 1.96 * (standardDeviation_mb / Math.sqrt(m_rel.length));
-      const rounded_margin_mb  = parseFloat(marginOfError_mb.toPrecision(2));
-      // Calculate median
-      const sorted_m_rel = m_rel.slice().sort((a, b) => a - b);
-      const median_m_rel = sorted_m_rel.length % 2 === 0
-      ? (sorted_m_rel[sorted_m_rel.length / 2 - 1] + sorted_m_rel[sorted_m_rel.length / 2]) / 2
-      : sorted_m_rel[Math.floor(sorted_m_rel.length / 2)];
-      const rounded_median_m_rel  = parseFloat(median_m_rel.toPrecision(2));
-      
+      const [m_rel, , ] = ReadExcel(workbook, 2, 5,NValue,TValue,'Rel')
+      const [mean_mrel, margin_mrel, median_mrel] = get_averages(m_rel)
       // Update values
-      AccRelEl.innerText = `Mean prediction accuracy: ${rounded_mean_pa} ± ${rounded_margin}
-        Median prediction accuracy: ${rounded_median}
-        Mean univariate BWAS reliability: ${rounded_mean_u_rel} ± ${rounded_margin_ub}
-        Median univariate BWAS reliability: ${rounded_median_u_rel}
-        Mean multivariate BWAS reliability: ${rounded_mean_m_rel} ± ${rounded_margin_mb}
-        Median multivariate BWAS reliability: ${rounded_median_m_rel}`;
-    })
+      multiEl.innerText = `Mean multivariate BWAS reliability: ${mean_mrel} ± ${margin_mrel}
+        Median multivariate BWAS reliability: ${median_mrel}`;
+
+      })
       .catch(error => {
         console.error('Error reading Excel file:', error.message);
       });
@@ -177,6 +89,145 @@ function calcRel(K0,K1,K2,N,T) {
   let rel = 0; 
   rel = K0 / (K0 + (1/(N/2)) * (1 - ((2*K1)/(1+(K2/T)))))
   return rel
+}
+
+function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
+  let ABCD_names = [];
+  let HCP_names = [];
+  let vec = [];
+
+  // Loop through each row (2 to 18) for ABCD
+  {
+    let sheetName = workbook.SheetNames[ABCDSheet];
+    let worksheet = workbook.Sheets[sheetName];
+    for (let row = 2; row <= 18; row++) {
+        // calculate formula
+        const K0 = worksheet[`B${row}`]
+        const K1 = worksheet[`C${row}`]
+        const K2 = worksheet[`D${row}`]
+        if (type === 'Acc') {
+            vec.push(calcAcc(K1.v, K2.v, NValue, TValue));
+        } else if (type === 'Rel') {
+            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
+        } 
+        // get phenotype names
+        const name = worksheet[`A${row}`]
+        ABCD_names.push(name.v)
+    }
+  }
+  // Loop through each row (2 to 20) for HCP
+  { 
+    let sheetName = workbook.SheetNames[HCPSheet];
+    let worksheet = workbook.Sheets[sheetName];
+    for (let row = 2; row <= 20; row++) {
+        // calculate formula
+        const K0 = worksheet[`B${row}`]
+        const K1 = worksheet[`C${row}`]
+        const K2 = worksheet[`D${row}`]
+        if (type === 'Acc') {
+            vec.push(calcAcc(K1.v, K2.v, NValue, TValue));
+        } else if (type === 'Rel') {
+            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
+        } 
+        // get phenotype names
+        const name = worksheet[`A${row}`]
+        HCP_names.push(name.v)
+    }
+  }
+  return [vec,ABCD_names,HCP_names]
+}
+
+function get_averages(vec) {
+  // get mean
+  let mean = vec.length > 0 ? vec.reduce((a, b) => a + b) / vec.length : 0;
+  let rounded_mean = parseFloat(mean.toPrecision(2)); // Round off to 2 significant figures
+
+  // Calculate confidence interval (assuming a 95% confidence level)
+  let standardDeviation = Math.sqrt(vec.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (vec.length - 1));
+  let marginOfError = 1.96 * (standardDeviation / Math.sqrt(vec.length));
+  let rounded_margin  = parseFloat(marginOfError.toPrecision(2));
+      
+  // Calculate median
+  let sorted = vec.slice().sort((a, b) => a - b);
+  let median = sorted.length % 2 === 0
+      ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+      : sorted[Math.floor(sorted.length / 2)];
+  let rounded_median  = parseFloat(median.toPrecision(2));
+
+  return [rounded_mean, rounded_margin, rounded_median]
+}
+
+function calculateKDE(data, bandwidth) {
+  const n = data.length;
+  return data.map(x =>
+    (1 / (n * bandwidth)) * data.reduce((sum, xi) => sum + gaussianKernel(x - xi, bandwidth), 0)
+  );
+}
+
+function plotHist(html_el, vec) {
+  // Update histogram
+  var histTrace = { x: vec, type: 'histogram', opacity: 0.7,
+      marker: {color: 'blue',}, histfunc: 'density',
+      xbins: {start: 0, end: 1, size: (1/100)},
+      histnorm: 'probability density'};
+      //xbins: {start: Math.min(...acc), end: Math.max(...acc), size: (1/50)},
+  // Line plot for KDE
+  var sortedX = vec.slice().sort((a, b) => a - b);
+  var lineTrace = {x: [0].concat(sortedX, [1]), // Add points at the boundaries
+      y: calculateKDE(sortedX, 0.18), mode: 'lines', line: { color: 'green' }};
+  var data_v = [histTrace, lineTrace];
+  var layout = {xaxis: {title: 'Accuracy (Normalized by K0)', range: [0, 1]},
+        yaxis: {title: 'PDF'}, height: 300, width: 1000};
+  var config = {displayModeBar: false};
+  // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
+  Plotly.newPlot(html_el, data_v, layout, config);
+}
+
+function drawTable(div_el, vec, dataset, dataset_names) {
+  // define table contents
+  var tableDiv = document.getElementById(div_el);
+  var new_vec;
+  if (dataset === 'HCP') {
+    new_vec = vec.slice(17, 37).map(value => parseFloat(value.toPrecision(2)));
+  } else {
+    new_vec = vec.slice(0, 17).map(value => parseFloat(value.toPrecision(2)));
+  }
+  var new_vec_indices = new_vec.map((_, index) => index + 1);
+  // Define your table data
+var tableData = [{
+  type: 'table',
+  header: {
+    values: ['Index', 'Phenotype', 'Accuracy (Normalized by K0)'],
+    align: 'center',
+    line: { width: 1, color: 'black' },
+    fill: { color: '#333333' },
+    font: { family: "Arial", size: 12, color: "white" },
+    height: 20, // Adjust the header row height as needed
+    widths: [1, 2, 2], // Adjust the width of columns aeded
+  },
+  cells: {
+    values: [new_vec_indices, dataset_names, new_vec],
+    align: 'center',
+    line: { color: "black", width: 0 },
+    font: { family: "Arial", size: 10, color: ["black"] },
+    height: 15, // Adjust the data row height as needed
+    widths: [1, 2, 2], // Adjust the width of columns a
+    fill: {
+      color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
+    },
+  }
+}];
+
+  // Define the layout
+  var layout = { height: 300, width: 500,
+    margin: { l: 0, r: 0, b: 0, t: 0 }};
+  var config = {displayModeBar: false};
+  // Plot the table
+  Plotly.newPlot(tableDiv, tableData, layout, config);
+}
+
+function gaussianKernel(x, bandwidth) {
+  return Math.exp((-0.5 * x * x) / (bandwidth * bandwidth)) / (bandwidth * Math.sqrt(2 * Math.PI));
 }
 
 function getBudgetParams() {
@@ -333,23 +384,36 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
 
-function jumpToSection(containerId) {
-    // Function to scroll to a specific container
-    var container = document.getElementById(containerId);
-
-    if (container) {
-        // Scroll to the top of the container smoothly
-        container.scrollIntoView({ behavior: 'smooth' });
+function openContainer(containerId, clickedTab) {
+    // Hide all containers
+    var containers = document.getElementsByClassName('container-content');
+    for (var i = 0; i < containers.length; i++) {
+        containers[i].style.display = 'none';
     }
+
+    // Display the selected container
+    document.getElementById(containerId).style.display = 'block';
+    // Set the active tab
+    setActiveTab(clickedTab);
 }
 
-// Add all event listeners
-jump2Cont2.addEventListener('click', function () {
-    jumpToSection('container2');
-});
+function setActiveTab(tab) {
+  // Reset all tabs to inactive state
+  document.querySelectorAll('.tabs button').forEach(function (otherTab) {
+  otherTab.style.backgroundColor = '#444';
+  });
+  // Set the clicked tab to active state
+  tab.style.backgroundColor = '#8b0000';
+}
 
-jump2Cont4.addEventListener('click', function () {
-    jumpToSection('container4');
+// Variables to be set on startup
+// Press PredAcc tab when page loads
+document.addEventListener("DOMContentLoaded", function() {
+    openContainer('PredAcc');
 });
-B1.addEventListener("click", getNTParams);
+// Calculate NT param graph
+getNTParams()
+
+// Add all event listeners
+//B1.addEventListener("click", getNTParams);
 B2.addEventListener("click", getBudgetParams);

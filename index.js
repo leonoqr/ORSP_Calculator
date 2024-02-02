@@ -423,10 +423,13 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   }
 
   // update plots
-  var MRI_overhead_t = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(otScanTimeValue)
-  var nMRI_overhead_c = num_Ppt_sav * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * NumSessions));
   var cost_p_t = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
-  plotBarPlot('BudgetBar', budgetValue, (num_Ppt_sav * fMRITime_sav * cost_p_t), (num_Ppt_sav * MRI_overhead_t * cost_p_t), nMRI_overhead_c, 'Money')
+  var total_scantime_pp = Itvls_Scanned * parseFloat(ScanItvlValue)
+  var MRI_overhead_t = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(otScanTimeValue)
+  var fMRI_c = num_Ppt_sav * fMRITime_sav * cost_p_t;
+  var MRI_overhead_c = num_Ppt_sav * (1 - (fMRITime_sav / total_scantime_pp)) * total_scantime_pp * cost_p_t;
+  var nMRI_overhead_c = num_Ppt_sav * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * NumSessions));
+  plotBarPlot('BudgetBar', budgetValue, fMRI_c, MRI_overhead_c, nMRI_overhead_c, 'Money')
   plotBarPlot('TimeBar', ScanDuration_sav, fMRITime_sav, MRI_overhead_t, 0, 'Time')
 
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];

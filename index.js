@@ -70,6 +70,9 @@ function getNTParams() {
       // Update values
       multiEl.innerText = `Mean multivariate BWAS reliability: ${mean_mrel} ± ${margin_mrel}
         Median multivariate BWAS reliability: ${median_mrel}`;
+      plotHist('mRelHist', m_rel)
+      drawTable('ABCD_mRelTable', m_rel, 'ABCD', ABCD_names)
+      drawTable('HCP_mRelTable', m_rel, 'HCP', HCP_names)
 
       })
       .catch(error => {
@@ -157,28 +160,70 @@ function get_averages(vec) {
   return [rounded_mean, rounded_margin, rounded_median]
 }
 
-function calculateKDE(data, bandwidth) {
-  const n = data.length;
-  return data.map(x =>
-    (1 / (n * bandwidth)) * data.reduce((sum, xi) => sum + gaussianKernel(x - xi, bandwidth), 0)
-  );
+function calculateKDE(data, bandwidth, numBins) {
+    // Step 1: Sort data into 250 bins
+    const binWidth = 1 / numBins;
+    var data_bin = sortDataIntoBins(data, numBins);
+
+    // Step 2: Calculate KDE from data_bin
+    var kdeValues = new Array(numBins).fill(0);
+
+    for (let index = 0; index < numBins; index++) {
+        for (let c = 0; c < numBins; c++) {
+            var distance = Math.abs(c - index);
+            var gaussianValue = gaussianKernel(distance, bandwidth) * data_bin[index];
+            kdeValues[c] += gaussianValue;
+        }
+    }
+
+    // Step 3: Return normalized KDE values
+    return kdeValues.map(value => value * (bandwidth * Math.sqrt(2 * Math.PI)));
+}
+
+function sortDataIntoBins(data, numBins) {
+
+    const binWidth = 1 / numBins;
+    const binCounts = new Array(numBins).fill(0);
+
+    data.forEach(x => {
+        // Ensure the data point is within the valid range [0, 1]
+        if (x >= 0 && x <= 1) {
+            // Calculate the bin index and increment the count
+            const binIndex = Math.floor(x * numBins);
+            binCounts[binIndex]++;
+        }
+    });
+
+    return binCounts;
+}
+
+function gaussianKernel(x, bandwidth) {
+  return Math.exp((-0.5 * x * x) / (bandwidth * bandwidth)) / (bandwidth * Math.sqrt(2 * Math.PI));
+}
+
+function linspace(start, end, numPoints) {
+    const step = (end - start) / Math.max(numPoints - 1, 1);
+    return Array.from({ length: numPoints }, (_, i) => start + i * step);
 }
 
 function plotHist(html_el, vec) {
   // Update histogram
-  var histTrace = { x: vec, type: 'histogram', opacity: 0.7,
-      marker: {color: 'blue',}, histfunc: 'density',
-      xbins: {start: 0, end: 1, size: (1/100)},
-      histnorm: 'probability density'};
-      //xbins: {start: Math.min(...acc), end: Math.max(...acc), size: (1/50)},
+  var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
+      marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
+// histnorm: 'probability density' histfunc: 'density',
+// xbins: {start: Math.min(...acc), end: Math.max(...acc), size: (1/50)},
+
   // Line plot for KDE
   var sortedX = vec.slice().sort((a, b) => a - b);
-  var lineTrace = {x: [0].concat(sortedX, [1]), // Add points at the boundaries
-      y: calculateKDE(sortedX, 0.18), mode: 'lines', line: { color: 'green' }};
+  const new_x = linspace(0, 1, 250);
+  var lineTrace = {x: new_x, y: calculateKDE(vec, 3, 250), opacity: 0.7, 
+        mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
+
   var data_v = [histTrace, lineTrace];
   var layout = {xaxis: {title: 'Accuracy (Normalized by K0)', range: [0, 1]},
-        yaxis: {title: 'PDF'}, height: 300, width: 1000};
+        yaxis: {title: 'Frequency'}, showlegend: false, height: 300, width: 1000};
   var config = {displayModeBar: false};
+
   // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
   Plotly.newPlot(html_el, data_v, layout, config);
 }
@@ -194,40 +239,35 @@ function drawTable(div_el, vec, dataset, dataset_names) {
   }
   var new_vec_indices = new_vec.map((_, index) => index + 1);
   // Define your table data
-var tableData = [{
-  type: 'table',
-  header: {
-    values: ['Index', 'Phenotype', 'Accuracy (Normalized by K0)'],
-    align: 'center',
-    line: { width: 1, color: 'black' },
-    fill: { color: '#333333' },
-    font: { family: "Arial", size: 12, color: "white" },
-    height: 20, // Adjust the header row height as needed
-    widths: [1, 2, 2], // Adjust the width of columns aeded
-  },
-  cells: {
-    values: [new_vec_indices, dataset_names, new_vec],
-    align: 'center',
-    line: { color: "black", width: 0 },
-    font: { family: "Arial", size: 10, color: ["black"] },
-    height: 15, // Adjust the data row height as needed
-    widths: [1, 2, 2], // Adjust the width of columns a
-    fill: {
-      color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
+  var tableData = [{
+    type: 'table',
+    columnwidth: [80,210,210],
+    header: {
+      values: ['Index', 'Phenotype', 'Accuracy (Normalized by K0)'],
+      align: 'center',
+      line: { width: 1, color: 'black' },
+      fill: { color: '#333333' },
+      font: { family: "Arial", size: 12, color: "white" },
+      height: 20, 
     },
-  }
-}];
+    cells: {
+      values: [new_vec_indices, dataset_names, new_vec],
+      align: 'center',
+      line: { color: "black", width: 0 },
+      font: { family: "Arial", size: 12, color: ["black"] },
+      height: 20, // Adjust the data row height as needed
+      fill: {
+        color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
+      },
+    }
+  }];
 
   // Define the layout
-  var layout = { height: 300, width: 500,
+  var layout = { height: 320, width: 500,
     margin: { l: 0, r: 0, b: 0, t: 0 }};
   var config = {displayModeBar: false};
   // Plot the table
   Plotly.newPlot(tableDiv, tableData, layout, config);
-}
-
-function gaussianKernel(x, bandwidth) {
-  return Math.exp((-0.5 * x * x) / (bandwidth * bandwidth)) / (bandwidth * Math.sqrt(2 * Math.PI));
 }
 
 function getBudgetParams() {
@@ -279,6 +319,8 @@ function getBudgetParams() {
                           getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, maxSValue);
+
+      // update text
       resultEl.innerText = `Number of participants: ${num_Ppt}
                             fMRI scan time per participant (across all sessions): ${fMRITime} mins
                             Effective fMRI total scan time: ${effScanTime} mins
@@ -378,11 +420,146 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       if (efffMRITime < parseFloat(maxTValue)) { 
           fMRITime = efffMRITime + parseFloat(ScanItvlValue) - psScanTimeValue; // add one scan interval
       } 
-
   }
+
+  // update plots
+  var MRI_overhead_t = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(otScanTimeValue)
+  var nMRI_overhead_c = num_Ppt_sav * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * NumSessions));
+  var cost_p_t = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
+  plotBarPlot('BudgetBar', budgetValue, (num_Ppt_sav * fMRITime_sav * cost_p_t), (num_Ppt_sav * MRI_overhead_t * cost_p_t), nMRI_overhead_c, 'Money')
+  plotBarPlot('TimeBar', ScanDuration_sav, fMRITime_sav, MRI_overhead_t, 0, 'Time')
 
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
+
+function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
+if (mode == 'Money'){
+    var categories = ['$'];
+} else if (mode == 'Time') {
+    var categories = ['mins'];
+}
+
+// Create traces for each category
+var fMRI = {
+    y: categories,
+    x: [f_v],
+    name: 'fMRI',
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+        color: 'orange',
+    },
+};
+
+var MRIoverHead = {
+    y: categories,
+    x: [moh_v],
+    name: 'MRI overhead',
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+        color: '#00274e',
+    },
+};
+
+var nonMRIoverHead = {
+    y: categories,
+    x: [nmoh_v],
+    name: 'non-MRI overhead',
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+        color: '#800000',
+    },
+};
+
+var Unused = {
+    y: categories,
+    x: [t_v - f_v - moh_v - nmoh_v],
+    name: 'Unused',
+    type: 'bar',
+    orientation: 'h',
+marker: {
+        color: '#333333',
+    }, 
+};
+
+if (mode == 'Money'){
+    var reqData = [fMRI, MRIoverHead, nonMRIoverHead, Unused];
+    var Title = "Budget breakdown"
+} else if (mode == 'Time') {
+    var reqData = [fMRI, MRIoverHead, Unused];
+    var Title = "Scan breakdown"
+}
+
+// Define the layout
+var layout = {
+    height: 200, width: 500,
+    barmode: 'stack',  // Set the bar mode to 'stack'
+    title: Title,
+    legend: {
+        y: 0.5, // Center the legend vertically
+        orientation: 'v',
+        traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
+    },
+    margin: { l: 30, r: 50, b: 15, t: 25 }
+};
+
+var config = {displayModeBar: false};
+
+// Plot the chart
+Plotly.newPlot(BarEl, reqData, layout, config);
+}
+
+function plotLinePlot(LineEl) {
+    // Sample data
+    var xValues = [1, 2];
+    var yValues = [10, 20];
+
+    // Create a trace for scatter points
+    var scatterTrace = {
+        x: xValues,
+        y: yValues,
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Scatter Points',
+        marker: {
+            size: 10,
+            color: 'green',  // Set the color for scatter points
+        },
+    };
+
+    // Create a trace for the line
+    var lineTrace = {
+        x: xValues,
+        y: yValues,
+        mode: 'lines',
+        type: 'scatter',
+        name: 'Line',
+        line: {
+            color: 'orange',  // Set the color for the line
+            width: 2,
+        },
+    };
+
+    // Define the layout
+    var layout = {
+        height: 280,
+        width: 500,
+        title: 'Line Plot with Scatter Points',
+        showlegend: true,
+        legend: {
+            x: 0.85,
+            y: 1,
+        },
+    };
+
+    var config = { displayModeBar: false };
+
+    // Plot the chart
+    Plotly.newPlot(LineEl, [scatterTrace, lineTrace], layout, config);
+}
+
 
 function openContainer(containerId, clickedTab) {
     // Hide all containers
@@ -411,8 +588,15 @@ function setActiveTab(tab) {
 document.addEventListener("DOMContentLoaded", function() {
     openContainer('PredAcc');
 });
+
+
+
 // Calculate NT param graph
 getNTParams()
+// Plot bar plots
+plotBarPlot('BudgetBar', 9999, 100, 100, 100, 'Money')
+plotBarPlot('TimeBar', 60, 30, 10, 0, 'Time')
+plotLinePlot('AccGraph')
 
 // Add all event listeners
 //B1.addEventListener("click", getNTParams);

@@ -1,8 +1,8 @@
 body {
   margin: 0;
-  padding: 20px;
-  font-family: "Verdana", sans-serif;
-  background: linear-gradient(to bottom, #ffffff, #d3d3d3);
+  padding: 0;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  background: white;
   color: black;
 }
 
@@ -76,6 +76,17 @@ body {
 
 .third_container {
   width: 35%;
+  height: 90vh; /* % of the viewport height */
+  background-color: white;
+  box-shadow: none;
+  padding: 20px;
+  max-width: none;
+  margin: 0 auto;
+  border-radius: 0px;
+}
+
+.half_container {
+  width: 50%;
   height: 90vh; /* % of the viewport height */
   background-color: white;
   box-shadow: none;
@@ -177,22 +188,52 @@ h1 {
   margin-bottom: 20px;
 }
 
+.section-divider {
+    border: 1px solid #ddd; /* Adjust the border color */
+    margin: 20px 0; /* Adjust the margin to control the space around the divider */
+}
+
 label {
   font-weight: bold;
   margin-bottom: 10px;
 }
 
 input {
-  border-radius: 5px;
+  border-radius: 0;
   width: 100%;
 }
 
 input[type="number"] {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  max-width: 80px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 0; /* Non-rounded edges */
+    width: 100%;
+    max-width: 80px;
+
+    /* Chrome, Safari, Edge, Opera */
+    -webkit-appearance: none;
+    margin: 0;
+
+    /* Firefox */
+    -moz-appearance: textfield;
+}
+
+/* For Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+input[type="number"]::-moz-focus-inner {
+    border: 0;
+}
+
+/* For IE11 */
+input[type="number"]::-ms-clear,
+input[type="number"]::-ms-reveal {
+    display: none;
 }
 
 input[type="range"] {
@@ -215,6 +256,24 @@ button:hover {
   background-color: #0062cc;
 }
 
+.transparent-button {
+  background-color: transparent;
+  border: none;
+  color: #000; /* Change the text color as needed */
+  padding: 10px 20px; /* Adjust the padding as needed */
+  text-align: left;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px; /* Adjust the font size as needed */
+  cursor: pointer;
+}
+
+.transparent-button:hover {
+  background-color: #f0f0f0; /* Change the background color on hover */
+}
+.more-text {
+  display: none;
+}
 
 #result {
   margin-top: 20px;

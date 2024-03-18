@@ -357,6 +357,9 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   let efffMRITime = parseFloat(minTValue);
   let unusedTime = 0;
   let unusedTime_sav = 0;
+  let N_list = [];
+  let T_list = [];
+  let NT_Acc = [];
 
   // find the number of intervals a participant can handle
   let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue))); 
@@ -403,6 +406,13 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
                  + efffMRITime + parseFloat(otScanTimeValue));
 
+      // calculate acc
+      N_list.push(num_Ppt)
+      T_list.push(fMRITime)
+      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'Acc')
+      const [mean_pa, margin_pa, median_pa] = get_averages(acc)
+      NT_Acc.push()
+
       // save values if this effective scan time is the new highest
       if (effScanTime > effScanTime_sav) {
           num_Ppt_sav = num_Ppt
@@ -431,87 +441,88 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   var nMRI_overhead_c = num_Ppt_sav * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * NumSessions));
   plotBarPlot('BudgetBar', budgetValue, fMRI_c, MRI_overhead_c, nMRI_overhead_c, 'Money')
   plotBarPlot('TimeBar', ScanDuration_sav, fMRITime_sav, MRI_overhead_t, 0, 'Time')
+  plotLinePlot('AccGraph')
 
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
 
 function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
-if (mode == 'Money'){
-    var categories = ['$'];
-} else if (mode == 'Time') {
-    var categories = ['mins'];
-}
+  if (mode == 'Money'){
+      var categories = ['$'];
+  } else if (mode == 'Time') {
+      var categories = ['mins'];
+  }
 
-// Create traces for each category
-var fMRI = {
-    y: categories,
-    x: [f_v],
-    name: 'fMRI',
-    type: 'bar',
-    orientation: 'h',
-    marker: {
-        color: 'orange',
-    },
-};
+  // Create traces for each category
+  var fMRI = {
+      y: categories,
+      x: [f_v],
+      name: 'fMRI',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: 'orange',
+      },
+  };
 
-var MRIoverHead = {
-    y: categories,
-    x: [moh_v],
-    name: 'MRI overhead',
-    type: 'bar',
-    orientation: 'h',
-    marker: {
-        color: '#00274e',
-    },
-};
+  var MRIoverHead = {
+      y: categories,
+      x: [moh_v],
+      name: 'MRI overhead',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: '#00274e',
+      },
+  };
 
-var nonMRIoverHead = {
-    y: categories,
-    x: [nmoh_v],
-    name: 'non-MRI overhead',
-    type: 'bar',
-    orientation: 'h',
-    marker: {
-        color: '#800000',
-    },
-};
+  var nonMRIoverHead = {
+      y: categories,
+      x: [nmoh_v],
+      name: 'non-MRI overhead',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: '#800000',
+      },
+  };
 
-var Unused = {
-    y: categories,
-    x: [t_v - f_v - moh_v - nmoh_v],
-    name: 'Unused',
-    type: 'bar',
-    orientation: 'h',
-marker: {
-        color: '#333333',
-    }, 
-};
+  var Unused = {
+      y: categories,
+      x: [t_v - f_v - moh_v - nmoh_v],
+      name: 'Unused',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: '#333333',
+      }, 
+  };
 
-if (mode == 'Money'){
-    var reqData = [fMRI, MRIoverHead, nonMRIoverHead, Unused];
-    var Title = "Budget breakdown"
-} else if (mode == 'Time') {
-    var reqData = [fMRI, MRIoverHead, Unused];
-    var Title = "Scan breakdown"
-}
+  if (mode == 'Money'){
+      var reqData = [fMRI, MRIoverHead, nonMRIoverHead, Unused];
+      var Title = "Budget breakdown"
+  } else if (mode == 'Time') {
+      var reqData = [fMRI, MRIoverHead, Unused];
+      var Title = "Scan breakdown"
+  }
 
-// Define the layout
-var layout = {
-    height: 200, width: 500,
-    barmode: 'stack',  // Set the bar mode to 'stack'
-    title: Title,
-    legend: {
-        y: 0.5, // Center the legend vertically
-        orientation: 'v',
-        traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
-    },
-    margin: { l: 30, r: 50, b: 15, t: 25 }
-};
+  // Define the layout
+  var layout = {
+      height: 200, width: 500,
+      barmode: 'stack',  // Set the bar mode to 'stack'
+      title: Title,
+      legend: {
+          y: 0.5, // Center the legend vertically
+          orientation: 'v',
+          traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
+      },
+      margin: { l: 30, r: 50, b: 15, t: 25 }
+  };
 
-var config = {displayModeBar: false};
+  var config = {displayModeBar: false};
 
-// Plot the chart
-Plotly.newPlot(BarEl, reqData, layout, config);
+  // Plot the chart
+  Plotly.newPlot(BarEl, reqData, layout, config);
 }
 
 function plotLinePlot(LineEl) {

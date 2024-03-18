@@ -155,6 +155,7 @@ body {
 
 .container-content h2 {
     color: #333;
+    margin-bottom: 2px;
 }
 
 .container-content p {

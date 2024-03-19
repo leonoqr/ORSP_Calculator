@@ -1,4 +1,5 @@
-// Define all factors
+// ------ Define all elements -------
+// Get elements from the HTML for further calculations
 const B1 = document.getElementById("B1");
 const B2 = document.getElementById("B2");
 const N_El = document.getElementById("N");
@@ -13,135 +14,39 @@ const otScanTime_El = document.getElementById("otScanTime");
 const PptCost_El = document.getElementById("PptCost");
 const SsnCost_El = document.getElementById("SsnCost");
 const maxS_El = document.getElementById("maxS");
-const AccEl = document.getElementById("Acc_Results");
-const uniEl = document.getElementById("uniRel_Results");
-const multiEl = document.getElementById("multiRel_Results");
+const oAccEl = document.getElementById("oAcc_Results");
+const rAccEl = document.getElementById("rAcc_Results");
 const resultEl = document.getElementById("Budget_Results");
+const OrderEl = document.getElementById('r_order')
+// ----------------------------------
 
-// Define functions
-function getNTParams() {
-  // load function values from accuracy calculator form
-  const NValue = N_El.value;
-  const TValue = T_El.value;
-  // Display error message if any values are blank
-  if (NValue == "") {
-      alert("Please enter N");
-  } else if (TValue == "") {
-      alert("Please enter T");
-  } 
-
-  const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
-  fetch(filePath)
-      .then(response => {
-      if (!response.ok) {
-          throw new Error(`Failed to fetch file (HTTP ${response.status})`);
-      }
-      return response.arrayBuffer();
-      })
-      .then(buffer => {
-      const data = new Uint8Array(buffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-
-      // calculate values for each phenotype
-
-      // Prediction accuracy
-      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'Acc')
-      const [mean_pa, margin_pa, median_pa] = get_averages(acc)
-      // Update text and graphs
-      AccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
-        Median prediction accuracy: ${median_pa}`;
-      plotHist('PredHist', acc)
-      drawTable('ABCD_accTable', acc, 'ABCD', ABCD_names)
-      drawTable('HCP_accTable', acc, 'HCP', HCP_names)
-
-      // univariate BWAS
-      const [u_rel, , ] = ReadExcel(workbook, 1, 4,NValue,TValue,'Rel')
-      const [mean_urel, margin_urel, median_urel] = get_averages(u_rel)
-      // Update text and graphs
-      uniEl.innerText = `Mean univariate BWAS reliability: ${mean_urel} ± ${margin_urel}
-        Median univariate BWAS reliability: ${median_urel}`;
-      plotHist('uRelHist', u_rel)
-      drawTable('ABCD_uRelTable', u_rel, 'ABCD', ABCD_names)
-      drawTable('HCP_uRelTable', u_rel, 'HCP', HCP_names)
-
-      // multivariate BWAS
-      const [m_rel, , ] = ReadExcel(workbook, 2, 5,NValue,TValue,'Rel')
-      const [mean_mrel, margin_mrel, median_mrel] = get_averages(m_rel)
-      // Update values
-      multiEl.innerText = `Mean multivariate BWAS reliability: ${mean_mrel} ± ${margin_mrel}
-        Median multivariate BWAS reliability: ${median_mrel}`;
-      plotHist('mRelHist', m_rel)
-      drawTable('ABCD_mRelTable', m_rel, 'ABCD', ABCD_names)
-      drawTable('HCP_mRelTable', m_rel, 'HCP', HCP_names)
-
-      })
-      .catch(error => {
-        console.error('Error reading Excel file:', error.message);
-      });
+// ------ Define functions -------
+// ------ 1. Functions to calculate accuracy and reliability -------
+function calcAcc(K0,K1,K2,N,T) {
+  // Calculate accuracy based on N and T
+  let acc = 0; 
+  acc = K0*Math.sqrt(1/(1 + (K1/N) + ((K2)/(N*T))))
+  return acc
 }
 
-function calcAcc(K1,K2,N,T) {
-  // initialize variables
+function calcNormAcc(K1,K2,N,T) {
+  // Calculate normalized accuracy based on N and T
   let acc = 0; 
   acc = Math.sqrt(1/(1 + (K1/N) + ((K2)/(N*T))))
   return acc
 }
 
 function calcRel(K0,K1,K2,N,T) {
-  // initialize variables
+  // Calculate reliability based on N and T
   let rel = 0; 
   rel = K0 / (K0 + (1/(N/2)) * (1 - ((2*K1)/(1+(K2/T)))))
   return rel
 }
-
-function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
-  let ABCD_names = [];
-  let HCP_names = [];
-  let vec = [];
-
-  // Loop through each row (2 to 18) for ABCD
-  {
-    let sheetName = workbook.SheetNames[ABCDSheet];
-    let worksheet = workbook.Sheets[sheetName];
-    for (let row = 2; row <= 18; row++) {
-        // calculate formula
-        const K0 = worksheet[`B${row}`]
-        const K1 = worksheet[`C${row}`]
-        const K2 = worksheet[`D${row}`]
-        if (type === 'Acc') {
-            vec.push(calcAcc(K1.v, K2.v, NValue, TValue));
-        } else if (type === 'Rel') {
-            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
-        } 
-        // get phenotype names
-        const name = worksheet[`A${row}`]
-        ABCD_names.push(name.v)
-    }
-  }
-  // Loop through each row (2 to 20) for HCP
-  { 
-    let sheetName = workbook.SheetNames[HCPSheet];
-    let worksheet = workbook.Sheets[sheetName];
-    for (let row = 2; row <= 20; row++) {
-        // calculate formula
-        const K0 = worksheet[`B${row}`]
-        const K1 = worksheet[`C${row}`]
-        const K2 = worksheet[`D${row}`]
-        if (type === 'Acc') {
-            vec.push(calcAcc(K1.v, K2.v, NValue, TValue));
-        } else if (type === 'Rel') {
-            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
-        } 
-        // get phenotype names
-        const name = worksheet[`A${row}`]
-        HCP_names.push(name.v)
-    }
-  }
-  return [vec,ABCD_names,HCP_names]
-}
-
+// -----------------------------------------------------------------
+// ------ 2. Functions to collate results or calculate distributions ------
 function get_averages(vec) {
-  // get mean
+  // From a vector of values, get the mean, median and confidence inteval
+  // Calculate mean
   let mean = vec.length > 0 ? vec.reduce((a, b) => a + b) / vec.length : 0;
   let rounded_mean = parseFloat(mean.toPrecision(2)); // Round off to 2 significant figures
 
@@ -161,6 +66,7 @@ function get_averages(vec) {
 }
 
 function calculateKDE(data, bandwidth, numBins) {
+    // Sort a vector of data into bins and calculate its KDE
     // Step 1: Sort data into 250 bins
     const binWidth = 1 / numBins;
     var data_bin = sortDataIntoBins(data, numBins);
@@ -206,12 +112,142 @@ function linspace(start, end, numPoints) {
     return Array.from({ length: numPoints }, (_, i) => start + i * step);
 }
 
-function plotHist(html_el, vec) {
+// ------------------------------------------------------------------------
+// ------ 3. Functions to read values from the excel sheets ------
+function getNTParams(version) {
+  // Calculate accuracies based on N and T for 3 cases
+  // 1: Original run order
+  // 2: Randomized run order
+  // 3: Own K values are entered (only plot if values are entered)
+  // Requires input of version which can be either "Acc" or "NormAcc"
+ 
+  // load function values from accuracy calculator form
+  const NValue = N_El.value;
+  const TValue = T_El.value;
+  // Display error message if any values are blank
+  if (NValue == "") {
+      alert("Please enter N");
+  } else if (TValue == "") {
+      alert("Please enter T");
+  } 
+  if (version == "Acc") {
+      xtitle = "Pearson's Correlation"
+  } else if (version == "NormAcc") {
+      xtitle = "Normalized Accuracy"
+  }
+
+  // Plot original order values
+  const o_filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
+  fetch(o_filePath)
+      .then(response => {
+      if (!response.ok) {
+          throw new Error(`Failed to fetch file (HTTP ${response.status})`);
+      }
+      return response.arrayBuffer();
+      })
+      .then(buffer => {
+      var data = new Uint8Array(buffer);
+      var workbook = XLSX.read(data, { type: 'array' });
+
+      // Prediction accuracy
+      var [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
+      var [mean_pa, margin_pa, median_pa] = get_averages(acc)
+      // Update text and graphs
+      oAccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
+        Median prediction accuracy: ${median_pa}`;
+      plotHist('oAccHist', acc, xtitle)
+      drawTable('ABCD_oAccTable', acc, 'ABCD', ABCD_names)
+      drawTable('HCP_oAccTable', acc, 'HCP', HCP_names)
+
+      })
+      .catch(error => {
+        console.error('Error reading Excel file:', error.message);
+      });
+
+  // Plot random order values
+  const r_filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_randomized_240318.xlsx';
+  fetch(r_filePath)
+      .then(response => {
+      if (!response.ok) {
+          throw new Error(`Failed to fetch file (HTTP ${response.status})`);
+      }
+      return response.arrayBuffer();
+      })
+      .then(buffer => {
+      var data = new Uint8Array(buffer);
+      var workbook = XLSX.read(data, { type: 'array' });
+
+      // Prediction accuracy
+      var [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
+      var [mean_pa, margin_pa, median_pa] = get_averages(acc)
+      // Update text and graphs
+      rAccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
+        Median prediction accuracy: ${median_pa}`;
+      plotHist('rAccHist', acc, xtitle)
+      drawTable('ABCD_rAccTable', acc, 'ABCD', ABCD_names)
+      drawTable('HCP_rAccTable', acc, 'HCP', HCP_names)
+
+      })
+      .catch(error => {
+        console.error('Error reading Excel file:', error.message);
+      });
+}
+
+function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
+  let ABCD_names = [];
+  let HCP_names = [];
+  let vec = [];
+
+  // Loop through each row (2 to 18) for ABCD
+  {
+    let sheetName = workbook.SheetNames[ABCDSheet];
+    let worksheet = workbook.Sheets[sheetName];
+    for (let row = 2; row <= 18; row++) {
+        // calculate formula
+        const K0 = worksheet[`B${row}`]
+        const K1 = worksheet[`C${row}`]
+        const K2 = worksheet[`D${row}`]
+        if (type === 'Acc') {
+            vec.push(calcAcc(K0.v, K1.v, K2.v, NValue, TValue));
+        } else if (type === 'NormAcc') {
+            vec.push(calcNormAcc(K1.v, K2.v, NValue, TValue));
+        } else if (type === 'Rel') {
+            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
+        } 
+        // get phenotype names
+        const name = worksheet[`A${row}`]
+        ABCD_names.push(name.v)
+    }
+  }
+  // Loop through each row (2 to 20) for HCP
+  { 
+    let sheetName = workbook.SheetNames[HCPSheet];
+    let worksheet = workbook.Sheets[sheetName];
+    for (let row = 2; row <= 20; row++) {
+        // calculate formula
+        const K0 = worksheet[`B${row}`]
+        const K1 = worksheet[`C${row}`]
+        const K2 = worksheet[`D${row}`]
+        if (type === 'Acc') {
+            vec.push(calcAcc(K0.v, K1.v, K2.v, NValue, TValue));
+        } else if (type === 'NormAcc') {
+            vec.push(calcNormAcc(K1.v, K2.v, NValue, TValue));
+        } else if (type === 'Rel') {
+            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
+        }
+        // get phenotype names
+        const name = worksheet[`A${row}`]
+        HCP_names.push(name.v)
+    }
+  }
+  return [vec,ABCD_names,HCP_names]
+}
+// ---------------------------------------------------------------
+// ------ 4. Functions to draw plots ------
+function plotHist(html_el, vec, xtitle) {
   // Update histogram
   var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
       marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
-// histnorm: 'probability density' histfunc: 'density',
-// xbins: {start: Math.min(...acc), end: Math.max(...acc), size: (1/50)},
 
   // Line plot for KDE
   var sortedX = vec.slice().sort((a, b) => a - b);
@@ -220,7 +256,7 @@ function plotHist(html_el, vec) {
         mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
 
   var data_v = [histTrace, lineTrace];
-  var layout = {xaxis: {title: 'Accuracy (Normalized by K0)', range: [0, 1]},
+  var layout = {xaxis: {title: xtitle, range: [0, 1]},
         yaxis: {title: 'Frequency'}, showlegend: false, height: 300, width: 1000};
   var config = {displayModeBar: false};
 
@@ -409,7 +445,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       // calculate acc
       N_list.push(num_Ppt)
       T_list.push(fMRITime)
-      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'Acc')
+      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'NormAcc')
       const [mean_pa, margin_pa, median_pa] = get_averages(acc)
       NT_Acc.push()
 
@@ -573,7 +609,8 @@ function plotLinePlot(LineEl) {
     // Plot the chart
     Plotly.newPlot(LineEl, [scatterTrace, lineTrace], layout, config);
 }
-
+// ----------------------------------------
+// ------ 4. Functions to draw plots ------
 
 function openContainer(containerId, clickedTab) {
     // Hide all containers
@@ -597,21 +634,49 @@ function setActiveTab(tab) {
   tab.style.backgroundColor = '#8b0000';
 }
 
-// Variables to be set on startup
-// Press PredAcc tab when page loads
-document.addEventListener("DOMContentLoaded", function() {
-    openContainer('PredAcc');
-});
+function showSelectedContainer() {
+    // Get the selected radio input
+    var selectedRadio = document.querySelector('input[name="Ordertab"]:checked');
+    
+    // Get the ID of the container associated with the selected radio input
+    var containerId = selectedRadio.getAttribute('data-container');
+    
+    // Hide all containers
+    var containers = document.querySelectorAll('.container-content');
+    containers.forEach(function(container) {
+        container.style.display = 'none';
+    });
+    
+    // Show the container associated with the selected radio input
+    var containerToShow = document.getElementById(containerId);
+    if (containerToShow) {
+        containerToShow.style.display = 'block';
+    }
+}
 
 
 
-// Calculate NT param graph
-getNTParams()
+// ------ Run these functions when script is called -------
 // Plot bar plots
 plotBarPlot('BudgetBar', 9999, 100, 100, 100, 'Money')
 plotBarPlot('TimeBar', 60, 30, 10, 0, 'Time')
 plotLinePlot('AccGraph')
 
-// Add all event listeners
-//B1.addEventListener("click", getNTParams);
+// Press OrigAcc tab when page loads
+//document.addEventListener("DOMContentLoaded", function() {
+//    openContainer('OrigAcc');
+//});
+
+// Call the function initially to show the initially selected container
+showSelectedContainer();
+// Calculate NT param graph
+getNTParams("NormAcc")
+
+// ------ Add all event listeners ------
+// Update budget calculator page
 B2.addEventListener("click", getBudgetParams);
+// Update accuracy calculator page
+var radioInputs = document.querySelectorAll('input[name="Ordertab"]');
+radioInputs.forEach(function(input) {
+    input.addEventListener('click', showSelectedContainer);
+});

@@ -63,6 +63,11 @@ body {
   margin: 0 auto;
 }
 
+.tabs-container {
+    display: flex;
+    width: 100%; /* Ensure the tabs container takes up the full width */
+}
+
 .short_container {
   width: 100%;
   height: 40vh; /* % of the viewport height */
@@ -114,21 +119,67 @@ body {
 
 /* tab settings */
 .tabs {
-    background-color: inherit;
-    overflow: hidden;
+  display: flex;
+  position: relative;
+  background-color: #fff;
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.3), 0 6px 12px 0 rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 99px; /* just a high number to create pill effect */
+  width: 40%; 
+  margin-right: 15px;
+  * {
+        z-index: 2;
+    }
 }
 
-.tabs button {
-    background-color: #444;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center; /* Center-align the text */
+  height: 20px;
+  width: 50%;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 99px; /* just a high number to create pill effect */
+  cursor: pointer;
+  transition: color 0.15s ease-in;
 }
 
-.tabs button:hover {
-    background-color: #555;
+.glider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%; /* Take up the full height of the parent container */
+    min-width: 50%; /* Ensure the glider covers at least half the width of the parent container */
+    background-color: rgba(139, 0, 0, 0.7); /* Set the background color to dark red */
+    z-index: 1;
+    border-radius: 50px; /* Use half of the height to create a pill shape */
+    transition: 0.25s ease-out;
+}
+
+input[type="radio"] {
+  display: none;
+}
+
+input[type="radio"][id="Orig"]:checked ~ .glider {
+    transform: translateX(0);
+}
+
+input[type="radio"][id="Random"]:checked ~ .glider {
+    transform: translateX(100%);
+}
+
+input[type="radio"][id="NormAcc"]:checked ~ .glider {
+    transform: translateX(0);
+}
+
+input[type="radio"][id="Acc"]:checked ~ .glider {
+    transform: translateX(100%);
+}
+
+input[type="radio"]:checked + label {
+  color: #fff;
 }
 
 .container-area {

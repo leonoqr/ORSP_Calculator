@@ -28,9 +28,8 @@
         </p>
         <h2>Description</h2>
         <hr class="section-divider">
-        <p> A pervasive dilemma in neuroimaging is whether to prioritize sample size or scan duration given fixed resources. Here, we systematically investigate this trade-off in the context of brain-wide association studies (BWAS) using resting-state functional magnetic resonance imaging (fMRI).
-        <img src="README_Figure.jpg" alt="README Figure"><br>
-        We show that sample size and scan duration are broadly interchangable below 30 minutes. We explain the influence of sample size and scan duration with a theoretical model. Finally, we investigate how accounting for costs impacts study design.</p>
+        <p> A pervasive dilemma in neuroimaging is whether to prioritize sample size or scan duration given fixed resources. Here, we provide a tool that calculates the achievable accuracy with different combinations of sample size and scan durations, taking other study costs into account.
+        <img src="README_Figure.jpg" alt="README Figure"></p>
         <h2>Updates</h2>
         <hr class="section-divider">
         <p> v0.01 (xx/xx/2024): Initial release of web app <br><br>
@@ -45,6 +44,24 @@
             <h1>Budget and Scan Billing Calculator</h1>
             <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs. <br><br>
             Hover over each input for a more detailed description of what to enter.</p>
+            <hr class="section-divider">
+            <button class="transparent-button" onmouseover="toggleMoreText('accMethod-text', true)" onmouseout="toggleMoreText('accMethod-text', false)">Accuracy calculation:</button>
+            <select id="r_order">
+            <option value="original">Average over 36 phenotypes: original run order</option>
+            <option value="randomized">Average over 36 phenotypes: randomized run order</option>
+            <option value="own">Enter your own K0, K1 and K2 values</option>
+            </select>
+            <div id="accMethod-text" class="more-text">
+            <p> Method of which to calculate estimate accuracy. Can either take parameters that were estimated from the average of 36 ABCD and HCP phenotypes in the paper, or enter your parameters. There is an option to use the original run order, or randomized run order.</p>
+            </div>
+
+            <div id="KFields" style="display: none;">
+                <p>Enter K values:
+                <input type="number" id="number1" placeholder="K0">
+                <input type="number" id="number2" placeholder="K1">
+                <input type="number" id="number3" placeholder="K2"></p>
+            </div>
+
             <hr class="section-divider">
             <h2>1. Monetary constraints</h2>
             <button class="transparent-button" onmouseover="toggleMoreText('budget-text', true)" onmouseout="toggleMoreText('budget-text', false)">Enter your budget:</button>
@@ -90,17 +107,18 @@
             <div id="psScanTime-text" class="more-text">
             <p> Scan time overhead due to unavoidable setup (e.g. T1, field map, participant set-up).</p>
             </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('otScanTime-text', true)" onmouseout="toggleMoreText('otScanTime-text', false)">One-time scan overhead (mins):</button>
+            <button class="transparent-button" onmouseover="toggleMoreText('otScanTime-text', true)" onmouseout="toggleMoreText('otScanTime-text', false)">Per participant scan overhead (mins):</button>
             <input type="number" id="otScanTime" name="otScanTime">
             <div id="otScanTime-text" class="more-text">
             <p> Scan time due to other sequences being collected, or other one-time events (e.g. Diffusion MRI, body imaging, practice scan to acclimatize participant). </p>
             </div>
             <hr class="section-divider">
-            <h2>5. Overhead non-MRI logistics cost</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('PptCost-text', true)" onmouseout="toggleMoreText('PptCost-text', false)">Cost per subject:</button>
+
+            <h2>5. Overhead non-MRI cost</h2>
+            <button class="transparent-button" onmouseover="toggleMoreText('PptCost-text', true)" onmouseout="toggleMoreText('PptCost-text', false)">Cost per participant:</button>
             <input type="number" id="PptCost" name="PptCost">
             <div id="PptCost-text" class="more-text">
-            <p> Costs related to recruitment consent (which might be influenced by target populations and number of imaging sites. Other costs such as mock scanner practice for children can also go here.</p>
+            <p> Costs related to recruitment consent (which might be influenced by target populations). Also, additional costs due to collecting other non-imaging tests (e.g. blood markers) or non-MRI imaging tests (e.g. PET) should go here as well. Other costs such as mock scanner practice for children can be included here.</p>
             </div>
             <div>
             <button class="transparent-button" onmouseover="toggleMoreText('SsnCost-text', true)" onmouseout="toggleMoreText('SsnCost-text', false)">Cost per session:</button>
@@ -110,16 +128,36 @@
             </div>
             </div>
             <hr class="section-divider">
-            <h2>6. Participant scan time constraints</h2>
+
+            <h2>6. Costs per imaging site</h2>
+            <button class="transparent-button" onmouseover="toggleMoreText('maxN-text', true)" onmouseout="toggleMoreText('maxN-text', false)">Enter maximum participants per imaging site:</button>
+            <input type="number" id="maxN" name="maxN">
+            <div id="maxN-text" class="more-text">
+            <p> Maximum number of participants each site can take. Adds additional sites according to sample size specified. </p>
+            </div>
+            <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">One time costs related to all sites:</button>
+            <input type="number" id="oneTimeSite" name="oneTimeSite">
+            <div id="oneTimeSite-text" class="more-text">
+            <p> Costs related to running more than 1 site. E.g. coordination meetings. </p>
+            </div>
+            <button class="transparent-button" onmouseover="toggleMoreText('perSite-text', true)" onmouseout="toggleMoreText('perSite-text', false)">Cost that scales per imaging site:</button>
+            <input type="number" id="perSite" name="perSite">
+            <div id="perSite-text" class="more-text">
+            <p> Costs incurred per site. E.g. hiring research assistants to run scans per site.  </p>
+            </div>
+            <hr class="section-divider">
+
+            <h2>7. Participant scan time constraints</h2>
             <button class="transparent-button" onmouseover="toggleMoreText('maxS-text', true)" onmouseout="toggleMoreText('maxS-text', false)">Enter maximum scan time per session (mins):</button>
             <input type="number" id="maxS" name="maxS">
             <div id="maxS-text" class="more-text">
             <p> Researcher might want to vary this based on the population being studied (e.g. children may only be able to tolerate short scan times, whereas PhD students needing to graduate might be able to tolerate very long scan times) </p>
             </div>
             <hr class="section-divider">
+
             <button id="B2">Calculate budgeting and scanning design</button>
-            </div>
-            <div class="container third_container">
+        </div>
+        <div class="container third_container">
             <div id="BudgetBar"></div>
             <div id="TimeBar"></div>
             <div id="AccGraph"></div>
@@ -127,7 +165,7 @@
             <p id="Budget_Results">
             Number of subjects: Uncalculated<br>
             fMRI scan time per participant (across all sessions): Uncalculated<br>
-            Effective total scan time: Uncalculated <br> <br>
+            Effective total scan time: Uncalculated <br><br>
             Optimal study design: To be determined
             </p>
         </div>
@@ -140,27 +178,46 @@
     <div class="flex-container">
         <div class="container third_container">
             <h1>Accuracy and Reliability Calculator</h1><br>
-            <p> This calculator provides the mean (± 95% confidence intervals) and median of prediction accuracy (normalized by maximum achievable prediction accuracy (K0), and split-half reliability of univariate and multivariate BWAS.</p> <br>
+            <p> This calculator provides the mean (± 95% confidence intervals) and median of BWAS prediction accuracy for 36 phenotypes in the ABCD and HCP. You can select to display the original run order and randomized run order from the tabs at the top of the page. If you have estimated the K-coefficients for your own phenotype, you may enter them to compare the performance against the other phenotypes displayed here.</p><br>
             <label for="N">Number of participants (N):</label>
             <input type="number" id="N" name="N" value="792" oninput="updateSlider(this.value)"> <br>
             <input type="range" id="NSlider" min="0" max="99999" step="1" value="792" oninput="updateInputBox(this.value)"><br>
             <label for="T">Scan time per participant in minutes (T):</label> 
             <input type="number" id="T" name="T" value="58" oninput="updateSlider(this.value)"> <br>
             <input type="range" id="TSlider" min="0" max="999" step="1" value="58" oninput="updateInputBox(this.value)"><br>
+            <hr class="section-divider">
+            <p> If you have calculated your own K0, K1, K2 values, you can enter them here: <br><br>
+            K0: <input type="number" id="number1" placeholder="K0"><br>
+            K1: <input type="number" id="number2" placeholder="K1"><br>
+            K2: <input type="number" id="number3" placeholder="K2"></p>
+            <button id="D_pheno">Display phenotype on bar chart</button>
+            <button id="removeD_pheno">Remove from display</button>
         </div>
 
         <!-- Switching Container Area -->
         <div class="container-area">
-            <div class="tabs">
-                <button onclick="openContainer('PredAcc', this)">Prediction Accuracy</button>
-                <button onclick="openContainer('uniRel', this)">Univariate BWAS Reliability</button>
-                <button onclick="openContainer('multiRel', this)">Multivariate BWAS Reliability</button>
+            <div class="tabs-container">
+                <div class="tabs">
+                    <input type="radio" id="Orig" name="Ordertab" checked data-container="OrigAcc" />
+                    <label class="tab" for="Orig">Original order</label>
+                    <input type="radio" id="Random" name="Ordertab" data-container="RandAcc" />
+                    <label class="tab" for="Random">Randomized order</label>
+                    <span class="glider"></span>
+                </div>
+
+                <div class="tabs">
+                    <input type="radio" id="NormAcc" name="Acctab" checked />
+                    <label class="tab" for="NormAcc">Accuracy (Normalized)</label>
+                    <input type="radio" id="Acc" name="Acctab" />
+                    <label class="tab" for="Acc">Accuracy (Correlation, not normalized)</label>
+                    <span class="glider"></span>
+                </div>
             </div>
 
-            <div id="PredAcc" class="container-content">
+            <div id="OrigAcc" class="container-content">
 		<div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
-                    <div id="PredHist"></div> <br>
-                    <p id="Acc_Results">
+                    <div id="oAccHist"></div> <br>
+                    <p id="oAcc_Results">
                     Mean prediction accuracy: Uncalculated<br>
                     Median prediction accuracy: Uncalculated<br><br>
                     </p>
@@ -168,50 +225,31 @@
 		<div class="short_container">
 		    <div class="half-container">
 		        <p> ABCD Phenotypes </p>
-		        <div id="ABCD_accTable"></div>
+		        <div id="ABCD_oAccTable"></div>
 	 	    </div>
 		    <div class="half-container">
 		        <p> HCP Phenotypes </p>
-		        <div id="HCP_accTable"></div>
+		        <div id="HCP_oAccTable"></div>
 		    </div>
                 </div>
             </div>
 
-            <div id="uniRel" class="container-content">
+            <div id="RandAcc" class="container-content">
                 <div class="short_container">
-                    <div id="uRelHist"></div> <br>
-                    <p id="uniRel_Results">
-                    Mean univariate BWAS reliability: Uncalculated<br>
-                    Median univariate BWAS reliability: Uncalculated<br>
+                    <div id="rAccHist"></div> <br>
+                    <p id="rAcc_Results">
+                    Mean prediction accuracy: Uncalculated<br>
+                    Median prediction accuracy: Uncalculated<br><br>
                     </p>
 		</div>
 		<div class="short_container">
 		    <div class="half-container">
 		        <p> ABCD Phenotypes </p>
-		        <div id="ABCD_uRelTable"></div>
+		        <div id="ABCD_rAccTable"></div>
 	 	    </div>
 		    <div class="half-container">
 		        <p> HCP Phenotypes </p>
-		        <div id="HCP_uRelTable"></div>
-		    </div>
-                </div>
-            </div>
-            <div id="multiRel" class="container-content">
-                <div class="short_container">
-                    <div id="mRelHist"></div> <br>
-                    <p id="multiRel_Results">
-                    Mean multivariate BWAS reliability: Uncalculated<br>
-                    Median multivariate BWAS reliability: Uncalculated<br>
-                    </p>
-		</div>
-		<div class="short_container">
-		    <div class="half-container">
-		        <p> ABCD Phenotypes </p>
-		        <div id="ABCD_mRelTable"></div>
-	 	    </div>
-		    <div class="half-container">
-		        <p> HCP Phenotypes </p>
-		        <div id="HCP_mRelTable"></div>
+		        <div id="HCP_rAccTable"></div>
 		    </div>
                 </div>
             </div>
@@ -239,21 +277,36 @@
         }
     }
     </script>
+
     <!-- Script to link slider and input box -->
     <script>
+    function get_AccVers() {
+        // Get the radio buttons
+        var radioNormalized = document.getElementById("NormAcc");
+        var radioCorrelation = document.getElementById("Acc");
+
+        if (radioNormalized.checked) {
+            return "NormAcc";
+        } else if (radioCorrelation.checked) {
+            return "Acc";
+        }
+    }
+
     function updateInputBox(value, inputId, sliderId) {
         document.getElementById(inputId).value = value;
         document.getElementById(sliderId).value = value;
-        if (inputId === 'N' || inputId === 'T') {
-            getNTParams();
+        var AccVers = get_AccVers()
+        if (inputId == 'N' || inputId == 'T') {
+            getNTParams(AccVers);
         }
     }
 
     function updateSlider(value, inputId, sliderId) {
         document.getElementById(inputId).value = value;
         document.getElementById(sliderId).value = value;
-        if (inputId === 'N' || inputId === 'T') {
-            getNTParams();
+        var AccVers = get_AccVers()
+        if (inputId == 'N' || inputId == 'T') {
+            getNTParams(AccVers);
         }
     }
 
@@ -273,6 +326,13 @@
     document.getElementById('T').addEventListener('input', function () {
         updateSlider(this.value, 'T', 'TSlider');
     });
+
+    var radioInputs = document.querySelectorAll('input[name="Acctab"]');
+    radioInputs.forEach(function(input) {
+        input.addEventListener('click', function() {
+            getNTParams(get_AccVers());
+        });
+    });
     </script>
     <!-- Script to toggle more text -->
     <script>
@@ -280,6 +340,18 @@
       var moreText = document.getElementById(sectionId);
           moreText.style.display = show ? 'block' : 'none';
     }
+    </script>
+    <!-- Script to toggle more number boxes -->
+    <script>
+    document.getElementById('r_order').addEventListener('change', function() {
+        var selectedOption = this.value;
+        var KFields = document.getElementById('KFields');
+        if (selectedOption === 'own') {
+            KFields.style.display = 'block';
+        } else {
+            KFields.style.display = 'none';
+        }
+    });
     </script>
 </body>
 </html>

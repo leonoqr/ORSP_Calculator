@@ -187,9 +187,10 @@
             <input type="range" id="TSlider" min="0" max="999" step="1" value="58" oninput="updateInputBox(this.value)"><br>
             <hr class="section-divider">
             <p> If you have calculated your own K0, K1, K2 values, you can enter them here: <br><br>
-            K0: <input type="number" id="number1" placeholder="K0"><br>
-            K1: <input type="number" id="number2" placeholder="K1"><br>
-            K2: <input type="number" id="number3" placeholder="K2"></p>
+            K0: <input type="number" id="AccK0" placeholder="K0"><br>
+            K1: <input type="number" id="AccK1" placeholder="K1"><br>
+            K2: <input type="number" id="AccK2" placeholder="K2"></p>
+            <div id="ownAccresult" style="display:none;"></div>
             <button id="D_pheno">Display phenotype on bar chart</button>
             <button id="removeD_pheno">Remove from display</button>
         </div>
@@ -209,14 +210,14 @@
                     <input type="radio" id="NormAcc" name="Acctab" checked />
                     <label class="tab" for="NormAcc">Accuracy (Normalized)</label>
                     <input type="radio" id="Acc" name="Acctab" />
-                    <label class="tab" for="Acc">Accuracy (Correlation, not normalized)</label>
+                    <label class="tab" for="Acc">Accuracy (Not normalized)</label>
                     <span class="glider"></span>
                 </div>
             </div>
 
             <div id="OrigAcc" class="container-content">
 		<div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
-                    <div id="oAccHist"></div> <br>
+                    <div id="oAccHist"></div>
                     <p id="oAcc_Results">
                     Mean prediction accuracy: Uncalculated<br>
                     Median prediction accuracy: Uncalculated<br><br>
@@ -235,8 +236,8 @@
             </div>
 
             <div id="RandAcc" class="container-content">
-                <div class="short_container">
-                    <div id="rAccHist"></div> <br>
+                <div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
+                    <div id="rAccHist"></div>
                     <p id="rAcc_Results">
                     Mean prediction accuracy: Uncalculated<br>
                     Median prediction accuracy: Uncalculated<br><br>
@@ -277,62 +278,8 @@
         }
     }
     </script>
-
     <!-- Script to link slider and input box -->
-    <script>
-    function get_AccVers() {
-        // Get the radio buttons
-        var radioNormalized = document.getElementById("NormAcc");
-        var radioCorrelation = document.getElementById("Acc");
 
-        if (radioNormalized.checked) {
-            return "NormAcc";
-        } else if (radioCorrelation.checked) {
-            return "Acc";
-        }
-    }
-
-    function updateInputBox(value, inputId, sliderId) {
-        document.getElementById(inputId).value = value;
-        document.getElementById(sliderId).value = value;
-        var AccVers = get_AccVers()
-        if (inputId == 'N' || inputId == 'T') {
-            getNTParams(AccVers);
-        }
-    }
-
-    function updateSlider(value, inputId, sliderId) {
-        document.getElementById(inputId).value = value;
-        document.getElementById(sliderId).value = value;
-        var AccVers = get_AccVers()
-        if (inputId == 'N' || inputId == 'T') {
-            getNTParams(AccVers);
-        }
-    }
-
-    // Add these event listeners to update the input box and slider when either is changed
-    document.getElementById('NSlider').addEventListener('input', function () {
-        updateInputBox(this.value, 'N', 'NSlider'); 
-    });
-
-    document.getElementById('N').addEventListener('input', function () {
-        updateSlider(this.value, 'N', 'NSlider');
-    });
-
-    document.getElementById('TSlider').addEventListener('input', function () {
-        updateInputBox(this.value, 'T', 'TSlider');
-    });
-
-    document.getElementById('T').addEventListener('input', function () {
-        updateSlider(this.value, 'T', 'TSlider');
-    });
-
-    var radioInputs = document.querySelectorAll('input[name="Acctab"]');
-    radioInputs.forEach(function(input) {
-        input.addEventListener('click', function() {
-            getNTParams(get_AccVers());
-        });
-    });
     </script>
     <!-- Script to toggle more text -->
     <script>

@@ -18,6 +18,17 @@ const oAccEl = document.getElementById("oAcc_Results");
 const rAccEl = document.getElementById("rAcc_Results");
 const resultEl = document.getElementById("Budget_Results");
 const OrderEl = document.getElementById('r_order')
+var radioNormalized = document.getElementById("NormAcc");
+var radioCorrelation = document.getElementById("Acc");
+var AccK0 = document.getElementById('AccK0');
+var AccK1 = document.getElementById('AccK1');
+var AccK2 = document.getElementById('AccK2');
+var ownAccRes = document.getElementById('ownAccresult');
+var ownAccDisplay = document.getElementById('D_pheno');
+var ownAccRemove = document.getElementById('removeD_pheno');
+var radioOInputs = document.querySelectorAll('input[name="Ordertab"]');
+var radioAInputs = document.querySelectorAll('input[name="Acctab"]');
+var dispOwnAcc = 0;
 // ----------------------------------
 
 // ------ Define functions -------
@@ -114,7 +125,7 @@ function linspace(start, end, numPoints) {
 
 // ------------------------------------------------------------------------
 // ------ 3. Functions to read values from the excel sheets ------
-function getNTParams(version) {
+function getNTParams(version,ownAcc) {
   // Calculate accuracies based on N and T for 3 cases
   // 1: Original run order
   // 2: Randomized run order
@@ -150,14 +161,14 @@ function getNTParams(version) {
       var workbook = XLSX.read(data, { type: 'array' });
 
       // Prediction accuracy
-      var [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
+      var [acc,ABCD_names,HCP_names,ABCD_K0,ABCD_K1,ABCD_K2,HCP_K0,HCP_K1,HCP_K2] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
       var [mean_pa, margin_pa, median_pa] = get_averages(acc)
       // Update text and graphs
       oAccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
         Median prediction accuracy: ${median_pa}`;
-      plotHist('oAccHist', acc, xtitle)
-      drawTable('ABCD_oAccTable', acc, 'ABCD', ABCD_names)
-      drawTable('HCP_oAccTable', acc, 'HCP', HCP_names)
+      plotHist('oAccHist', acc, xtitle,ownAcc)
+      drawTable('ABCD_oAccTable', acc, 'ABCD', ABCD_names,ABCD_K0,ABCD_K1,ABCD_K2)
+      drawTable('HCP_oAccTable', acc, 'HCP', HCP_names,HCP_K0,HCP_K1,HCP_K2)
 
       })
       .catch(error => {
@@ -178,14 +189,14 @@ function getNTParams(version) {
       var workbook = XLSX.read(data, { type: 'array' });
 
       // Prediction accuracy
-      var [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
+      var [acc,ABCD_names,HCP_names,ABCD_K0,ABCD_K1,ABCD_K2,HCP_K0,HCP_K1,HCP_K2] = ReadExcel(workbook, 0, 3,NValue,TValue,version)
       var [mean_pa, margin_pa, median_pa] = get_averages(acc)
       // Update text and graphs
       rAccEl.innerText = `Mean prediction accuracy: ${mean_pa} ± ${margin_pa}
         Median prediction accuracy: ${median_pa}`;
-      plotHist('rAccHist', acc, xtitle)
-      drawTable('ABCD_rAccTable', acc, 'ABCD', ABCD_names)
-      drawTable('HCP_rAccTable', acc, 'HCP', HCP_names)
+      plotHist('rAccHist', acc, xtitle, ownAcc)
+      drawTable('ABCD_rAccTable', acc, 'ABCD', ABCD_names,ABCD_K0,ABCD_K1,ABCD_K2)
+      drawTable('HCP_rAccTable', acc, 'HCP', HCP_names,HCP_K0,HCP_K1,HCP_K2)
 
       })
       .catch(error => {
@@ -193,9 +204,59 @@ function getNTParams(version) {
       });
 }
 
-function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
+function updateNTParams() {
+    // read current N and T values
+    const NValue = N_El.value;
+    const TValue = T_El.value;
+    // Update based on whether normalized or unnormalized results
+    // and whether own value should be plotted
+    if (radioNormalized.checked) {
+        if (dispOwnAcc === 1) {
+            var own_acc = calcNormAcc(AccK1.value, AccK2.value, NValue, TValue);
+            getNTParams("NormAcc", own_acc);
+        } else {
+            getNTParams("NormAcc", -2)
+        }
+    } else if (radioCorrelation.checked) {
+        if (dispOwnAcc === 1) {
+            var own_acc = calcAcc(AccK0.value, AccK1.value, AccK2.value, NValue, TValue);
+            getNTParams("Acc", own_acc);
+        }
+        else {
+            getNTParams("Acc", -2);
+        }
+    }
+}
+
+function updateInputBox(value, inputId, sliderId) {
+    document.getElementById(inputId).value = value;
+    document.getElementById(sliderId).value = value;
+    if (inputId === 'N' || inputId === 'T') {
+        updateNTParams();
+    }
+}
+
+function updateSlider(value, inputId, sliderId) {
+    document.getElementById(inputId).value = value;
+    document.getElementById(sliderId).value = value;
+    if (inputId === 'N' || inputId === 'T') {
+        updateNTParams();
+    }
+}
+
+function ReadExcel(workbook,ABCDSheet,HCPSheet,NValue,TValue,type) {
+  // Read excel notebook and save params, as well as calculate the accuracy based
+  // on the current N and T values.
+
+  // Define variables to be saved
   let ABCD_names = [];
+  let ABCD_K0 = [];
+  let ABCD_K1 = [];
+  let ABCD_K2 = [];
   let HCP_names = [];
+  let HCP_K0 = [];
+  let HCP_K1 = [];
+  let HCP_K2 = [];
   let vec = [];
 
   // Loop through each row (2 to 18) for ABCD
@@ -217,6 +278,9 @@ function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
         // get phenotype names
         const name = worksheet[`A${row}`]
         ABCD_names.push(name.v)
+        ABCD_K0.push(Number(K0.v.toFixed(2)))
+        ABCD_K1.push(Number(K1.v.toFixed(2)))
+        ABCD_K2.push(Number(K2.v.toFixed(2)))
     }
   }
   // Loop through each row (2 to 20) for HCP
@@ -238,72 +302,95 @@ function ReadExcel(workbook, ABCDSheet, HCPSheet,NValue,TValue,type) {
         // get phenotype names
         const name = worksheet[`A${row}`]
         HCP_names.push(name.v)
+        HCP_K0.push(Number(K0.v.toFixed(2)))
+        HCP_K1.push(Number(K1.v.toFixed(2)))
+        HCP_K2.push(Number(K2.v.toFixed(2)))
     }
   }
-  return [vec,ABCD_names,HCP_names]
+  return [vec,ABCD_names,HCP_names,ABCD_K0,ABCD_K1,ABCD_K2,HCP_K0,HCP_K1,HCP_K2]
 }
 // ---------------------------------------------------------------
 // ------ 4. Functions to draw plots ------
-function plotHist(html_el, vec, xtitle) {
-  // Update histogram
-  var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
-      marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
+function plotHist(html_el, vec, xtitle, ownAcc) {
+      // Plot histrogram
+      var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
+          marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
 
-  // Line plot for KDE
-  var sortedX = vec.slice().sort((a, b) => a - b);
-  const new_x = linspace(0, 1, 250);
-  var lineTrace = {x: new_x, y: calculateKDE(vec, 3, 250), opacity: 0.7, 
-        mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
+      // Convert histogram to KDE and plot line plot (filled below line)
+      var sortedX = vec.slice().sort((a, b) => a - b);
+      const new_x = linspace(0, 1, 250);
+      var lineTrace = {x: new_x, y: calculateKDE(vec, 3, 250), opacity: 0.7, 
+            mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
 
-  var data_v = [histTrace, lineTrace];
-  var layout = {xaxis: {title: xtitle, range: [0, 1]},
-        yaxis: {title: 'Frequency'}, showlegend: false, height: 300, width: 1000};
-  var config = {displayModeBar: false};
+      // Arrow trace
+      var arrowTrace = {
+          x: [ownAcc, ownAcc],
+          y: [0, Math.max(...lineTrace.y)],
+          mode: 'lines',
+          line: {
+          color: 'red',
+          width: 2,
+          dash: 'dashdot'
+          }
+      };
 
-  // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
-  Plotly.newPlot(html_el, data_v, layout, config);
+      if (ownAcc == -2) {
+          var data_v = [histTrace, lineTrace];
+      } else {
+          var data_v = [histTrace, lineTrace, arrowTrace];
+      }
+      var layout = {xaxis: {title: xtitle, range: [0, 1]},
+          yaxis: {title: 'Frequency'}, showlegend: false, height: 300, width: 1200};
+      var config = {displayModeBar: false};
+
+      // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
+      Plotly.newPlot(html_el, data_v, layout, config);
 }
 
-function drawTable(div_el, vec, dataset, dataset_names) {
-  // define table contents
-  var tableDiv = document.getElementById(div_el);
-  var new_vec;
-  if (dataset === 'HCP') {
-    new_vec = vec.slice(17, 37).map(value => parseFloat(value.toPrecision(2)));
-  } else {
-    new_vec = vec.slice(0, 17).map(value => parseFloat(value.toPrecision(2)));
-  }
-  var new_vec_indices = new_vec.map((_, index) => index + 1);
-  // Define your table data
-  var tableData = [{
-    type: 'table',
-    columnwidth: [80,210,210],
-    header: {
-      values: ['Index', 'Phenotype', 'Accuracy (Normalized by K0)'],
-      align: 'center',
-      line: { width: 1, color: 'black' },
-      fill: { color: '#333333' },
-      font: { family: "Arial", size: 12, color: "white" },
-      height: 20, 
-    },
-    cells: {
-      values: [new_vec_indices, dataset_names, new_vec],
-      align: 'center',
-      line: { color: "black", width: 0 },
-      font: { family: "Arial", size: 12, color: ["black"] },
-      height: 20, // Adjust the data row height as needed
-      fill: {
-        color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
-      },
-    }
-  }];
+function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
+    // Define variables
+    var tableDiv = document.getElementById(div_el);
+    var new_vec;
 
-  // Define the layout
-  var layout = { height: 320, width: 500,
-    margin: { l: 0, r: 0, b: 0, t: 0 }};
-  var config = {displayModeBar: false};
-  // Plot the table
-  Plotly.newPlot(tableDiv, tableData, layout, config);
+    // split vector into HCP and ABCD
+    if (dataset === 'HCP') {
+       new_vec = vec.slice(17, 37).map(value => parseFloat(value.toPrecision(2)));
+    } else {
+      new_vec = vec.slice(0, 17).map(value => parseFloat(value.toPrecision(2)));
+    }
+
+  // Define your table data
+    var new_vec_indices = new_vec.map((_, index) => index + 1);
+    var tableData = [{
+      type: 'table',
+      columnwidth: [80, 250, 150, 150, 150, 100],
+      header: {
+        values: ['Index', 'Phenotype', 'K0', 'K1', 'K2', 'Accuracy'],
+        align: 'center',
+        line: { width: 1, color: 'black' },
+        fill: { color: '#333333' },
+        font: { family: "Arial", size: 12, color: "white" },
+        height: 20, 
+      },
+      cells: {
+        values: [new_vec_indices, dataset_names, K0, K1, K2, new_vec],
+        align: 'center',
+        line: { color: "black", width: 0 },
+        font: { family: "Arial", size: 12, color: ["black"] },
+        height: 20, 
+        wrap: 'wrap',
+        fill: {
+          color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
+        },
+      }
+    }];
+
+    // Define the layout
+    var layout = { height: 320, width: 500,
+      margin: { l: 0, r: 0, b: 0, t: 0 }};
+    var config = {displayModeBar: false};
+    // Plot the table
+    Plotly.newPlot(tableDiv, tableData, layout, config);
 }
 
 function getBudgetParams() {
@@ -611,29 +698,6 @@ function plotLinePlot(LineEl) {
 }
 // ----------------------------------------
 // ------ 4. Functions to draw plots ------
-
-function openContainer(containerId, clickedTab) {
-    // Hide all containers
-    var containers = document.getElementsByClassName('container-content');
-    for (var i = 0; i < containers.length; i++) {
-        containers[i].style.display = 'none';
-    }
-
-    // Display the selected container
-    document.getElementById(containerId).style.display = 'block';
-    // Set the active tab
-    setActiveTab(clickedTab);
-}
-
-function setActiveTab(tab) {
-  // Reset all tabs to inactive state
-  document.querySelectorAll('.tabs button').forEach(function (otherTab) {
-  otherTab.style.backgroundColor = '#444';
-  });
-  // Set the clicked tab to active state
-  tab.style.backgroundColor = '#8b0000';
-}
-
 function showSelectedContainer() {
     // Get the selected radio input
     var selectedRadio = document.querySelector('input[name="Ordertab"]:checked');
@@ -651,9 +715,48 @@ function showSelectedContainer() {
     var containerToShow = document.getElementById(containerId);
     if (containerToShow) {
         containerToShow.style.display = 'block';
+        updateNTParams()
     }
 }
 
+function checkAccCalcInputs() {
+    // Get values from document
+    var val1 = AccK0.value;
+    var val2 = AccK1.value;
+    var val3 = AccK2.value;
+    const NValue = N_El.value;
+    const TValue = T_El.value;
+
+    // Check if all inputs have values
+    if (val1 !== '' && val2 !== '' && val3 !== '') {
+        // Display calculated accuracy
+        ownAccRes.innerText = "Pearson's correlation: " + calcAcc(val1,val2,val3,NValue,TValue)
+            + "\n" + "Normalized accuracy: " + calcNormAcc(val2,val3,NValue,TValue);
+        ownAccRes.style.display = 'block';
+        // Update graph if there is an existing display
+        if (dispOwnAcc == 1) {
+            updateNTParams()
+        }
+        // check if display button on graph is pressed
+        ownAccDisplay.addEventListener('click', function() {
+            // Set the value when the button is clicked
+            dispOwnAcc = 1;
+            updateNTParams()
+        });
+
+       // Add event listener to the remove button (if needed)
+       ownAccRemove.addEventListener('click', function() {
+           // Reset or remove the value when the button is clicked
+           dispOwnAcc = 0;
+           updateNTParams()
+       });
+    } else {
+        // Hide the result if any input is empty
+        ownAccRes.style.display = 'none';
+        dispOwnAcc = 0;
+        updateNTParams()
+    }
+}
 
 
 // ------ Run these functions when script is called -------
@@ -662,21 +765,36 @@ plotBarPlot('BudgetBar', 9999, 100, 100, 100, 'Money')
 plotBarPlot('TimeBar', 60, 30, 10, 0, 'Time')
 plotLinePlot('AccGraph')
 
-// Press OrigAcc tab when page loads
-//document.addEventListener("DOMContentLoaded", function() {
-//    openContainer('OrigAcc');
-//});
 
 // Call the function initially to show the initially selected container
 showSelectedContainer();
 // Calculate NT param graph
-getNTParams("NormAcc")
+updateNTParams()
 
 // ------ Add all event listeners ------
 // Update budget calculator page
 B2.addEventListener("click", getBudgetParams);
 // Update accuracy calculator page
-var radioInputs = document.querySelectorAll('input[name="Ordertab"]');
-radioInputs.forEach(function(input) {
+radioOInputs.forEach(function(input) {
     input.addEventListener('click', showSelectedContainer);
 });
+radioAInputs.forEach(function(input) {
+    input.addEventListener('click', function() {
+        updateNTParams();
+    });
+});
+document.getElementById('NSlider').addEventListener('input', function () {
+    updateInputBox(this.value, 'N', 'NSlider'); 
+});
+document.getElementById('N').addEventListener('input', function () {
+    updateSlider(this.value, 'N', 'NSlider');
+});
+document.getElementById('TSlider').addEventListener('input', function () {
+    updateInputBox(this.value, 'T', 'TSlider');
+});
+document.getElementById('T').addEventListener('input', function () {
+    updateSlider(this.value, 'T', 'TSlider');
+});
+AccK0.addEventListener('input', checkAccCalcInputs);
+AccK1.addEventListener('input', checkAccCalcInputs);
+AccK2.addEventListener('input', checkAccCalcInputs);

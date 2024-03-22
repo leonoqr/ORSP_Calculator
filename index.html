@@ -57,9 +57,9 @@
 
             <div id="KFields" style="display: none;">
                 <p>Enter K values:
-                <input type="number" id="number1" placeholder="K0">
-                <input type="number" id="number2" placeholder="K1">
-                <input type="number" id="number3" placeholder="K2"></p>
+                <input type="number" id="BudgK0" placeholder="K0">
+                <input type="number" id="BudgK1" placeholder="K1">
+                <input type="number" id="BudgK2" placeholder="K2"></p>
             </div>
 
             <hr class="section-divider">
@@ -130,20 +130,22 @@
             <hr class="section-divider">
 
             <h2>6. Costs per imaging site</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('maxN-text', true)" onmouseout="toggleMoreText('maxN-text', false)">Enter maximum participants per imaging site:</button>
-            <input type="number" id="maxN" name="maxN">
-            <div id="maxN-text" class="more-text">
-            <p> Maximum number of participants each site can take. Adds additional sites according to sample size specified. </p>
+            <div>
+            <button class="transparent-button" onmouseover="toggleMoreText('numSite-text', true)" onmouseout="toggleMoreText('numSite-text', false)">Number of imaging sites:</button>
+            <input type="number" id="numSite" name="numSite" placeholder="1">
+            <div id="numSite-text" class="more-text">
+            <p> Number of sites to use for the study. If you leave this blank, it will be assumed that study is run over 1 site. </p>
             </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">One time costs related to all sites:</button>
-            <input type="number" id="oneTimeSite" name="oneTimeSite">
-            <div id="oneTimeSite-text" class="more-text">
-            <p> Costs related to running more than 1 site. E.g. coordination meetings. </p>
             </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('perSite-text', true)" onmouseout="toggleMoreText('perSite-text', false)">Cost that scales per imaging site:</button>
-            <input type="number" id="perSite" name="perSite">
+            <button class="transparent-button" onmouseover="toggleMoreText('perSite-text', true)" onmouseout="toggleMoreText('perSite-text', false)">Cost per imaging site:</button>
+            <input type="number" id="perSite" name="perSite" placeholder="0">
             <div id="perSite-text" class="more-text">
-            <p> Costs incurred per site. E.g. hiring research assistants to run scans per site.  </p>
+            <p> Costs incurred per site. E.g. hiring research assistants to run scans per site. If you leave this blank the cost will be assumed to be $0.</p>
+            </div>
+            <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">Costs related to managing ALL sites:</button>
+            <input type="number" id="oneTimeSite" name="oneTimeSite" placeholder="0">
+            <div id="oneTimeSite-text" class="more-text">
+            <p> One-time costs that will be incurred from managing more than 1 site and does not scale with more sites. E.g. coordination meetings for site PIs. If you leave this blank the cost will be assumed to be $0.</p>
             </div>
             <hr class="section-divider">
 
@@ -155,19 +157,22 @@
             </div>
             <hr class="section-divider">
 
-            <button id="B2">Calculate budgeting and scanning design</button>
+            <button id="CalcBudg">Calculate budgeting and scanning design</button>
         </div>
+
         <div class="container third_container">
-            <div id="BudgetBar"></div>
-            <div id="TimeBar"></div>
             <div id="AccGraph"></div>
             <hr class="section-divider">
-            <p id="Budget_Results">
-            Number of subjects: Uncalculated<br>
-            fMRI scan time per participant (across all sessions): Uncalculated<br>
-            Effective total scan time: Uncalculated <br><br>
-            Optimal study design: To be determined
-            </p>
+            <div id="currT" style="display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center;"">
+                    <p style="margin-right: 10px;">fMRI scan duration (T): <span id="fMRISpan">1</span></p>
+                    <button id="G2Optima">Go to optima</button>
+                </div>
+                <input type="range" id="fMRIT" min="1" max="100" step="1" value="1">
+            </div><br>
+            <div id="Budget_Table"></div>
+            <div id="BudgetBar"></div>
+            <div id="TimeBar"></div>
         </div>
     </div>
     </section>
@@ -277,9 +282,6 @@
             window.scrollTo({ top: offset - margin, behavior: 'smooth' });
         }
     }
-    </script>
-    <!-- Script to link slider and input box -->
-
     </script>
     <!-- Script to toggle more text -->
     <script>

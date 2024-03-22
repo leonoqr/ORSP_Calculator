@@ -1,7 +1,6 @@
 // ------ Define all elements -------
 // Get elements from the HTML for further calculations
-const B1 = document.getElementById("B1");
-const B2 = document.getElementById("B2");
+const CalcBudg_El = document.getElementById("CalcBudg");
 const N_El = document.getElementById("N");
 const T_El = document.getElementById("T");
 const budget_El = document.getElementById("budget");
@@ -13,11 +12,19 @@ const psScanTime_El = document.getElementById("psScanTime");
 const otScanTime_El = document.getElementById("otScanTime");
 const PptCost_El = document.getElementById("PptCost");
 const SsnCost_El = document.getElementById("SsnCost");
+const numSite_El = document.getElementById("numSite");
+const perSite_El = document.getElementById("perSite");
+const oneTimeSite_El = document.getElementById("oneTimeSite");
 const maxS_El = document.getElementById("maxS");
 const oAccEl = document.getElementById("oAcc_Results");
 const rAccEl = document.getElementById("rAcc_Results");
-const resultEl = document.getElementById("Budget_Results");
+const AccGraphEl = document.getElementById("AccGraph");
+const resultEl = document.getElementById("Budget_Table");
 const OrderEl = document.getElementById('r_order')
+const CurrTEl = document.getElementById('currT')
+const fMRIrangeEl = document.getElementById('fMRIT');
+const fMRIcurrTEl = document.getElementById('fMRISpan');
+const G2OptimaEl = document.getElementById('G2Optima');
 var radioNormalized = document.getElementById("NormAcc");
 var radioCorrelation = document.getElementById("Acc");
 var AccK0 = document.getElementById('AccK0');
@@ -125,12 +132,14 @@ function linspace(start, end, numPoints) {
 
 // ------------------------------------------------------------------------
 // ------ 3. Functions to read values from the excel sheets ------
-function getNTParams(version,ownAcc) {
+function getNTParams(version, ownAcc) {
   // Calculate accuracies based on N and T for 3 cases
   // 1: Original run order
   // 2: Randomized run order
   // 3: Own K values are entered (only plot if values are entered)
   // Requires input of version which can be either "Acc" or "NormAcc"
+  // Can also include your own K values, and the accuracy based off these
+  // values are returned.
  
   // load function values from accuracy calculator form
   const NValue = N_El.value;
@@ -347,6 +356,46 @@ function plotHist(html_el, vec, xtitle, ownAcc) {
       Plotly.newPlot(html_el, data_v, layout, config);
 }
 
+function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC) {
+
+    // Define variables
+    var tableDiv = document.getElementById(div_el);
+    var tableData = [{
+      type: 'table',
+      columnwidth: [300, 200],
+      header: {
+        values: ['Parameters', 'Value'],
+        align: 'center',
+        line: { width: 1, color: 'black' },
+        fill: { color: '#333333' },
+        font: { family: "Arial", size: 12, color: "white" },
+        height: 20, 
+      },
+      cells: {
+        values: [
+            ["Pearson's Correlation", 'Normalized Accuracy',
+             'Sample size (N)', 'fMRI scan duration (T)', 'Number of sessions',
+            'Total scan length purchased', 'Unused scan time', 'Revised cost'],
+            [A, NA, N, T, S, SL, US, RC],
+        ],
+        align: 'center',
+        line: { color: "black", width: 0 },
+        fill: { color: ['lightgrey', 'white'] },
+        font: { family: "Arial", size: 12, color: ["black"] },
+        height: 20, 
+        wrap: 'wrap',
+        columnorder: [0, 1],
+      }
+    }];
+
+    // Define the layout
+    var layout = { height: 200, width: 500,
+      margin: { l: 0, r: 0, b: 0, t: 0 }};
+    var config = {displayModeBar: false};
+    // Plot the table
+    Plotly.newPlot(tableDiv, tableData, layout, config);
+}
+
 function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
     // Define variables
     var tableDiv = document.getElementById(div_el);
@@ -404,7 +453,11 @@ function getBudgetParams() {
   const otScanTimeValue = otScanTime_El.value;
   const PptCostValue = PptCost_El.value;
   const SsnCostValue = SsnCost_El.value;
+  let numSiteValue = numSite_El.value;
+  let perSiteValue = perSite_El.value;
+  let oneTimeSiteValue = oneTimeSite_El.value;
   const maxSValue = maxS_El.value;
+
   // Display error message if any values are blank
   if (budgetValue === "") {
       alert("Please enter a budget");
@@ -415,15 +468,15 @@ function getBudgetParams() {
   } else if (ScanItvlValue === "") {
       alert("Please enter intervals which scans are priced at");
   } else if (CostTimeValue === "") {
-      alert("Please the cost per interval");
+      alert("Please enter the cost per interval");
   } else if (psScanTimeValue === "") {
       alert("Please enter per-session overhead scan time");
   } else if (otScanTimeValue === "") {
       alert("Please enter one-time overhead scan time");
   } else if (PptCostValue === "") {
-      alert("Please cost per participant");
+      alert("Please enter cost per participant");
   } else if (SsnCostValue === "") {
-      alert("Please cost per session");
+      alert("Please enter cost per session");
   } else if (maxSValue === "") {
       alert("Please enter maximum scan time per session"); 
   } 
@@ -437,29 +490,212 @@ function getBudgetParams() {
   } else if (parseFloat(maxSValue) < parseFloat(psScanTimeValue)) {
       alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
   } else {
+      // set default values if site values are blank
+      if (numSiteValue === "") {
+          numSiteValue = 1;
+      }
+      if (perSiteValue === "") {
+          perSiteValue = 0;
+      } 
+      if (oneTimeSiteValue === "") {
+          oneTimeSiteValue = 0;
+      }
+
+      // update slider range
+      fMRIrangeEl.min = parseFloat(minTValue);
+      fMRIrangeEl.max = parseFloat(maxTValue);
       // calculate effective scan time
-      const [num_Ppt, effScanTime, NumSessions, TotalDuration, fMRITime, unusedTime, revised_Cost] =
-                          getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
-                          CostTimeValue, psScanTimeValue, otScanTimeValue,
-                          PptCostValue, SsnCostValue, maxSValue);
-
-      // update text
-      resultEl.innerText = `Number of participants: ${num_Ppt}
-                            fMRI scan time per participant (across all sessions): ${fMRITime} mins
-                            Effective fMRI total scan time: ${effScanTime} mins
-
-                            Optimal study design: 
-                            ${NumSessions} session(s)
-                            ${TotalDuration} min of scanning per participant (across all sessions)
-                            ${unusedTime} min of unused scan time
-                            $${revised_Cost} is the revised cost estimate`;
+      getOptimalParams(budgetValue, maxTValue, minTValue, 
+                 ScanItvlValue, CostTimeValue, psScanTimeValue,
+                 otScanTimeValue, PptCostValue, SsnCostValue, 
+                 numSiteValue, perSiteValue, oneTimeSiteValue, maxSValue)
+      .then(([acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec]) => {
+          updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                  U_vec, RC_vec, parseFloat(minTValue), budgetValue, CostTimeValue,  
+                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                  oneTimeSiteValue, numSiteValue, perSiteValue)
+          fMRIrangeEl.addEventListener('input', function() {
+              // Update the span text with the current value of the range input
+              fMRIcurrTEl.textContent = this.value;
+              updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                  U_vec, RC_vec, parseFloat(this.value), budgetValue, CostTimeValue,  
+                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                  oneTimeSiteValue, numSiteValue, perSiteValue)
+          });
+          G2OptimaEl.addEventListener('click', function() {
+              // Update the span text with maximum location
+              var maxAcc = Math.max(...normacc_vec);
+              var maxAcc_loc = T_vec[normacc_vec.indexOf(maxAcc)];
+              fMRIcurrTEl.textContent = maxAcc_loc;
+              fMRIrangeEl.value = maxAcc_loc;
+              updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                  U_vec, RC_vec, parseFloat(maxAcc_loc), budgetValue, CostTimeValue,  
+                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                  oneTimeSiteValue, numSiteValue, perSiteValue)
+          });
+    });
   }
+}
+
+function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+    U_vec, RC_vec, curr_pos, budgetValue, CostTimeValue, ScanItvlValue, psScanTimeValue, otScanTimeValue,
+    PptCostValue, SsnCostValue, oneTimeSiteValue, numSiteValue, perSiteValue) {
+    // Use the returned values here
+    plotLinePlot(AccGraphEl, T_vec, normacc_vec, curr_pos)
+    // update table
+    var plot_pos = T_vec.indexOf(curr_pos)
+    optimalParamsTable('Budget_Table', acc_vec[plot_pos], normacc_vec[plot_pos], N_vec[plot_pos], 
+        T_vec[plot_pos], S_vec[plot_pos], SD_vec[plot_pos], U_vec[plot_pos], RC_vec[plot_pos])
+    // update bar plots
+    var costperMin = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
+    var fMRI_c = T_vec[plot_pos] * N_vec[plot_pos] * costperMin
+    var MRI_overhead = (parseFloat(psScanTimeValue) * S_vec[plot_pos]) + parseFloat(otScanTimeValue)
+    var MRI_overhead_c = N_vec[plot_pos] * MRI_overhead * costperMin
+    var nMRI_overhead_c = N_vec[plot_pos] * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * S_vec[plot_pos]));
+    var siteCosts = oneTimeSiteValue - (numSiteValue * perSiteValue)
+    var unused_c = N_vec[plot_pos]  * U_vec[plot_pos] * costperMin
+    var rem_Budget = parseFloat(budgetValue) - RC_vec[plot_pos]
+    plotBarPlot('BudgetBar', fMRI_c, MRI_overhead_c, nMRI_overhead_c, siteCosts, unused_c, rem_Budget, 'Money')
+    plotBarPlot('TimeBar', T_vec[plot_pos], MRI_overhead, 0, 0, U_vec[plot_pos], 0, 'Time')
 }
 
 function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
-                          PptCostValue, SsnCostValue, maxSValue) {
+                          PptCostValue, SsnCostValue, numSiteValue,
+                          perSiteValue, oneTimeSiteValue, maxSValue) {
+
+    // Calculate remaining budget after accounting for site costs
+    let rem_budget = budgetValue - oneTimeSiteValue - (numSiteValue * perSiteValue)
+    // find the number of intervals a participant can handle
+    let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue)));
+    let fMRITime = parseFloat(minTValue);
+    let NumSessions = 0;
+    let TotalDuration = 0;
+    let SessionDuration_Needed = 0;
+    let Itvls_Needed = 0;
+    let Itvls_Scanned = 0;
+    let num_Ppt = 0;
+    let filePath;
+    var acc_vec = [];
+    var normacc_vec = [];
+    var N_vec = [];
+    var T_vec = [];
+    var S_vec = [];
+    var SD_vec = [];
+    var U_vec = [];
+    var RC_vec = [];
+    var promises = [];
+    var acc_option = OrderEl.value;
+
+    // promise that fetches accuracy data
+    function fetchAccuracyData(filePath, N, T) {
+        return fetch(filePath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch file (HTTP ${response.status})`);
+                }
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                var data = new Uint8Array(buffer);
+                var workbook = XLSX.read(data, { type: 'array' });
+
+                // Tabulate prediction accuracy
+                var [acc,,,,,,,,] = ReadExcel(workbook, 0, 3, N, T, 'Acc');
+                var [normacc,,,,,,,,] = ReadExcel(workbook, 0, 3, N, T, 'NormAcc');
+
+                // Calculate mean accuracy and push to acc_vec
+                var [mean_pa, margin_pa,] = get_averages(acc);
+                acc_vec.push(mean_pa);
+
+                // Calculate mean norm accuracy and push to normacc_vec
+                var [mean_normpa, margin_normpa,] = get_averages(normacc);
+                normacc_vec.push(mean_normpa);
+            })
+            .catch(error => {
+                console.error('Error reading Excel file:', error.message);
+            });
+    }
+
+
+    // calculate accuracy from ranging from minimum fMRI value to maximum fMRI time value
+    while (fMRITime <= parseFloat(maxTValue)) {
+        // Calculate how many sessions are needed, starting with one session      
+        NumSessions = 1;
+        // find total time and number of scan intervals needed per participant
+        TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
+                        + parseFloat(otScanTimeValue);
+        SessionDuration_Needed = TotalDuration;
+        Itvls_Needed = Math.ceil((TotalDuration / parseFloat(ScanItvlValue)));
+        Itvls_Scanned = Itvls_Needed;
+        // if you need more intervals than participant can handle, increase NumSessions
+        while (Itvls_Needed > maxItvl) {
+            NumSessions++;
+            // update total time needed per participant using minimum scan time
+            TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
+                            + parseFloat(otScanTimeValue);
+            // assume you scan maximum permissble time for previous sessions, calculate how much additional time is needed
+            SessionDuration_Needed = TotalDuration - ((NumSessions - 1) * maxItvl * parseFloat(ScanItvlValue));
+            // find remaining number of intervals needed
+            Itvls_Needed = Math.ceil(SessionDuration_Needed / parseFloat(ScanItvlValue));
+            //alert(`Looping over intervals: ${Itvls_Needed}, ${maxItvl}`)
+            Itvls_Scanned = (((NumSessions - 1) * maxItvl) + Itvls_Needed);
+        }
+        ScanDuration = Itvls_Scanned * parseFloat(ScanItvlValue);
+        unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
+                     + fMRITime + parseFloat(otScanTimeValue));
+
+        // find cost per participant in terms of all participant costs and session costs
+        PxperPpt = (Itvls_Scanned * parseFloat(CostTimeValue)) + parseFloat(PptCostValue)
+                   + (parseFloat(SsnCostValue) * NumSessions);
+
+        // find number of participants you can afford 
+        num_Ppt = Math.floor(parseFloat(rem_budget) / PxperPpt);
+        revised_Cost = num_Ppt * PxperPpt;
+
+        // run accuracy calculation based on accuracy option
+        if (acc_option === 'own'){
+            // calculate accuracy based on K values
+            var val1 = BudgK0.value;
+            var val2 = BudgK1.value;
+            var val3 = BudgK2.value;
+            acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime));
+            normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime));
+        } else {
+            // choose which xlsx to read
+            if (acc_option === 'original'){
+                filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
+            } else if (acc_option === 'randomized'){
+                filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_randomized_240318.xlsx';
+            }
+
+            promises.push(fetchAccuracyData(filePath, num_Ppt, fMRITime));
+
+        };
+        // save values into vectors
+        N_vec.push(num_Ppt);
+        T_vec.push(fMRITime);
+        S_vec.push(NumSessions)
+        SD_vec.push(ScanDuration)
+        U_vec.push(unusedTime)
+        RC_vec.push(revised_Cost)
+        fMRITime++;
+    }
+
+    // return vectors
+    return Promise.all(promises).then(() => {
+        // After all promises are resolved, return the result
+        return [acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec];
+    });
+}
+
+
+function getParams_within_limits(budgetValue, maxTValue, minTValue, ScanItvlValue,
+                          CostTimeValue, psScanTimeValue, otScanTimeValue,
+                          PptCostValue, SsnCostValue, numSiteValue,
+                          perSiteValue, oneTimeSiteValue, maxSValue) {
   // initialize variables
+  let rem_budget = budgetValue - oneTimeSiteValue - (numSiteValue * perSiteValue)
   let num_Ppt = 0; 
   let num_Ppt_sav = 0; 
   let effScanTime = 0;
@@ -516,7 +752,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                + (parseFloat(SsnCostValue) * NumSessions);
 
       // find number of participants you can afford 
-      num_Ppt = Math.floor(parseFloat(budgetValue) / PxperPpt);
+      num_Ppt = Math.floor(parseFloat(rem_budget) / PxperPpt);
       revised_Cost = num_Ppt * PxperPpt;
 
       // calculate other values based on the calculated num_Ppt
@@ -528,13 +764,6 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
       effScanTime = efffMRITime * num_Ppt;
       unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
                  + efffMRITime + parseFloat(otScanTimeValue));
-
-      // calculate acc
-      N_list.push(num_Ppt)
-      T_list.push(fMRITime)
-      const [acc, ABCD_names, HCP_names] = ReadExcel(workbook, 0, 3,NValue,TValue,'NormAcc')
-      const [mean_pa, margin_pa, median_pa] = get_averages(acc)
-      NT_Acc.push()
 
       // save values if this effective scan time is the new highest
       if (effScanTime > effScanTime_sav) {
@@ -569,11 +798,11 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
   return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
 }
 
-function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
+function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
   if (mode == 'Money'){
-      var categories = ['$'];
+      var categories = ['Dollars ($)'];
   } else if (mode == 'Time') {
-      var categories = ['mins'];
+      var categories = ['Time (mins)'];
   }
 
   // Create traces for each category
@@ -610,10 +839,32 @@ function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
       },
   };
 
+  var siteCosts = {
+      y: categories,
+      x: [site_v],
+      name: 'Site Costs',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: '#006400',
+      },
+  };
+
   var Unused = {
       y: categories,
-      x: [t_v - f_v - moh_v - nmoh_v],
-      name: 'Unused',
+      x: [unuse_v],
+      name: 'Unused scan time',
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+          color: '#800080',
+      }, 
+  };
+
+  var RemBudg = {
+      y: categories,
+      x: [rem_v],
+      name: 'Remaining budget',
       type: 'bar',
       orientation: 'h',
       marker: {
@@ -622,7 +873,7 @@ function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
   };
 
   if (mode == 'Money'){
-      var reqData = [fMRI, MRIoverHead, nonMRIoverHead, Unused];
+      var reqData = [fMRI, MRIoverHead, nonMRIoverHead, siteCosts, Unused, RemBudg];
       var Title = "Budget breakdown"
   } else if (mode == 'Time') {
       var reqData = [fMRI, MRIoverHead, Unused];
@@ -631,15 +882,19 @@ function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
 
   // Define the layout
   var layout = {
-      height: 200, width: 500,
+      height: 100, 
+      width: 625,
       barmode: 'stack',  // Set the bar mode to 'stack'
-      title: Title,
+      title: {
+          text: Title,
+          font: {size: 14},
+      },
       legend: {
           y: 0.5, // Center the legend vertically
           orientation: 'v',
           traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
       },
-      margin: { l: 30, r: 50, b: 15, t: 25 }
+      margin: { l: 75, r: 50, b: 15, t: 25 }
   };
 
   var config = {displayModeBar: false};
@@ -648,53 +903,83 @@ function plotBarPlot(BarEl, t_v, f_v, moh_v, nmoh_v, mode) {
   Plotly.newPlot(BarEl, reqData, layout, config);
 }
 
-function plotLinePlot(LineEl) {
-    // Sample data
-    var xValues = [1, 2];
-    var yValues = [10, 20];
-
-    // Create a trace for scatter points
-    var scatterTrace = {
-        x: xValues,
-        y: yValues,
-        mode: 'markers',
-        type: 'scatter',
-        name: 'Scatter Points',
-        marker: {
-            size: 10,
-            color: 'green',  // Set the color for scatter points
-        },
-    };
+function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // Create a trace for the line
     var lineTrace = {
-        x: xValues,
-        y: yValues,
+        x: x_vec,
+        y: y_vec,
         mode: 'lines',
         type: 'scatter',
-        name: 'Line',
+        name: 'Accuracy',
         line: {
-            color: 'orange',  // Set the color for the line
+            color: 'orange', 
             width: 2,
         },
     };
 
+    // Create scatter plot
+    var maxY = Math.max(...y_vec);
+    var scatterTrace = {
+        x: [x_vec[y_vec.indexOf(maxY)]],
+        y: [maxY],
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Optimal parameters',
+        marker: {
+            size: 10,
+            color: 'green',  
+        },
+    };
+
+    // Create arrow plot
+    var arrowTrace = {
+        x: [pt, pt],
+        y: [Math.min(...lineTrace.y), Math.max(...lineTrace.y)],
+        mode: 'lines',
+        name: 'Current parameters',
+        line: {
+        color: 'red',
+        width: 2,
+        dash: 'dashdot'
+        }
+    };
+
     // Define the layout
     var layout = {
-        height: 280,
-        width: 500,
-        title: 'Line Plot with Scatter Points',
+        height: 250,
+        width: 600,
+        title: {
+            text: 'Normalized Accuracy vs Scan Duration',
+            font: {size: 14},
+        },
         showlegend: true,
         legend: {
-            x: 0.85,
-            y: 1,
+            x: 1, // Set legend x-coordinate to 1 (right)
+            y: 0, // Set legend y-coordinate to 0 (bottom)
+            xanchor: 'right', // Anchor legend to right
+            yanchor: 'bottom', // Anchor legend to bottom
+            bgcolor: 'rgba(0,0,0,0)'
         },
+        xaxis: {
+            title: 'fMRI Scan Duration (mins)',
+            titlefont: {
+                size: 12,
+            },
+        },
+        yaxis: {
+            title: 'Accuracy',
+            titlefont: {
+                size: 12,
+            },
+        },
+        margin: { l: 60, r: 10, b: 30, t: 25 },
     };
 
     var config = { displayModeBar: false };
 
     // Plot the chart
-    Plotly.newPlot(LineEl, [scatterTrace, lineTrace], layout, config);
+    Plotly.newPlot(LineEl, [scatterTrace, lineTrace, arrowTrace], layout, config);
 }
 // ----------------------------------------
 // ------ 4. Functions to draw plots ------
@@ -760,10 +1045,13 @@ function checkAccCalcInputs() {
 
 
 // ------ Run these functions when script is called -------
-// Plot bar plots
-plotBarPlot('BudgetBar', 9999, 100, 100, 100, 'Money')
-plotBarPlot('TimeBar', 60, 30, 10, 0, 'Time')
-plotLinePlot('AccGraph')
+// Plot initial graphs for budget calculator
+optimalParamsTable('Budget_Table')
+plotBarPlot('BudgetBar', 2000, 1000, 10000, 2000, 1000, 2000, 'Money')
+plotBarPlot('TimeBar', 30, 10, 0, 0, 20, 0, 'Time')
+var x_data = [1, 2, 3, 4, 5];
+var y_data = [0.1, 0.15, 0.13, 0.18, 0.2];
+plotLinePlot(AccGraphEl, x_data, y_data)
 
 
 // Call the function initially to show the initially selected container
@@ -773,7 +1061,7 @@ updateNTParams()
 
 // ------ Add all event listeners ------
 // Update budget calculator page
-B2.addEventListener("click", getBudgetParams);
+CalcBudg_El.addEventListener("click", getBudgetParams);
 // Update accuracy calculator page
 radioOInputs.forEach(function(input) {
     input.addEventListener('click', showSelectedContainer);

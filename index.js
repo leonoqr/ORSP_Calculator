@@ -552,7 +552,7 @@ function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_ve
     var MRI_overhead = (parseFloat(psScanTimeValue) * S_vec[plot_pos]) + parseFloat(otScanTimeValue)
     var MRI_overhead_c = N_vec[plot_pos] * MRI_overhead * costperMin
     var nMRI_overhead_c = N_vec[plot_pos] * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * S_vec[plot_pos]));
-    var siteCosts = oneTimeSiteValue - (numSiteValue * perSiteValue)
+    var siteCosts = parseFloat(oneTimeSiteValue) + (parseFloat(numSiteValue) * parseFloat(perSiteValue))
     var unused_c = N_vec[plot_pos]  * U_vec[plot_pos] * costperMin
     var rem_Budget = parseFloat(budgetValue) - RC_vec[plot_pos]
     plotBarPlot('BudgetBar', fMRI_c, MRI_overhead_c, nMRI_overhead_c, siteCosts, unused_c, rem_Budget, 'Money')
@@ -565,7 +565,7 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           perSiteValue, oneTimeSiteValue, maxSValue) {
 
     // Calculate remaining budget after accounting for site costs
-    let rem_budget = budgetValue - oneTimeSiteValue - (numSiteValue * perSiteValue)
+    let rem_budget = budgetValue - (parseFloat(oneTimeSiteValue) + (parseFloat(numSiteValue) * parseFloat(perSiteValue)))
     // find the number of intervals a participant can handle
     let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue)));
     let fMRITime = parseFloat(minTValue);
@@ -659,8 +659,8 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
             var val1 = BudgK0.value;
             var val2 = BudgK1.value;
             var val3 = BudgK2.value;
-            acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime));
-            normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime));
+            acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime).toPrecision(2));
+            normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime).toPrecision(2));
         } else {
             // choose which xlsx to read
             if (acc_option === 'original'){
@@ -799,8 +799,10 @@ function getParams_within_limits(budgetValue, maxTValue, minTValue, ScanItvlValu
 }
 
 function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
+  // custom hover template
+  var hoverTemplate = '<b>%{fullData.name}</b><extra>%{x}</extra>';
   if (mode == 'Money'){
-      var categories = ['Dollars ($)'];
+      var categories = ['Spending ($)'];
   } else if (mode == 'Time') {
       var categories = ['Time (mins)'];
   }
@@ -812,8 +814,10 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'fMRI',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
+      hoverinfo: 'name',
       marker: {
-          color: 'orange',
+          color: '#D2691E',
       },
   };
 
@@ -823,6 +827,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'MRI overhead',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
       marker: {
           color: '#00274e',
       },
@@ -834,6 +839,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'non-MRI overhead',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
       marker: {
           color: '#800000',
       },
@@ -845,6 +851,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'Site Costs',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
       marker: {
           color: '#006400',
       },
@@ -856,6 +863,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'Unused scan time',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
       marker: {
           color: '#800080',
       }, 
@@ -867,6 +875,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
       name: 'Remaining budget',
       type: 'bar',
       orientation: 'h',
+      hovertemplate: hoverTemplate,
       marker: {
           color: '#333333',
       }, 
@@ -893,6 +902,13 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
           y: 0.5, // Center the legend vertically
           orientation: 'v',
           traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
+      },
+      hovermode: 'closest', 
+      hoverlabel: {
+          bgcolor: 'white', // Set the background color of the hover label
+          bordercolor: 'black', // Set the border color of the hover label
+          font: { size: 12, color: 'black' }, // Set the font size and color of the hover label
+          namelength: -1, // Show full trace name in the hover label
       },
       margin: { l: 75, r: 50, b: 15, t: 25 }
   };

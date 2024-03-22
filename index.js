@@ -910,7 +910,7 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
           font: { size: 12, color: 'black' }, // Set the font size and color of the hover label
           namelength: -1, // Show full trace name in the hover label
       },
-      margin: { l: 75, r: 50, b: 15, t: 25 }
+      margin: { l: 80, r: 50, b: 15, t: 25 }
   };
 
   var config = {displayModeBar: false};

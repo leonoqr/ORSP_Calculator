@@ -689,115 +689,6 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
     });
 }
 
-
-function getParams_within_limits(budgetValue, maxTValue, minTValue, ScanItvlValue,
-                          CostTimeValue, psScanTimeValue, otScanTimeValue,
-                          PptCostValue, SsnCostValue, numSiteValue,
-                          perSiteValue, oneTimeSiteValue, maxSValue) {
-  // initialize variables
-  let rem_budget = budgetValue - oneTimeSiteValue - (numSiteValue * perSiteValue)
-  let num_Ppt = 0; 
-  let num_Ppt_sav = 0; 
-  let effScanTime = 0;
-  let effScanTime_sav = 0;
-  let NumSessions = 0;
-  let NumSessions_sav = 0;
-  let ScanDuration = 0;
-  let ScanDuration_sav = 0;
-  let TotalDuration = 0;
-  let SessionDuration_Needed = 0;
-  let Itvls_Needed = 0;
-  let Itvls_Scanned = 0;
-  let PxperPpt = 0;
-  let revised_Cost = 0;
-  let revised_Cost_sav = 0;
-  let fMRITime = parseFloat(minTValue); // start with minimum scan time 
-  let fMRITime_sav = fMRITime;
-  let efffMRITime = parseFloat(minTValue);
-  let unusedTime = 0;
-  let unusedTime_sav = 0;
-  let N_list = [];
-  let T_list = [];
-  let NT_Acc = [];
-
-  // find the number of intervals a participant can handle
-  let maxItvl = Math.floor((parseFloat(maxSValue) / parseFloat(ScanItvlValue))); 
-
-  while (effScanTime >= effScanTime_sav) {
-      // start with one session      
-      NumSessions = 1;
-
-      // find total time and number of scan intervals needed per participant
-      TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
-                    + parseFloat(otScanTimeValue);
-      SessionDuration_Needed = TotalDuration;
-      Itvls_Needed = Math.ceil((SessionDuration_Needed / parseFloat(ScanItvlValue)));
-      Itvls_Scanned = Itvls_Needed;
-
-      // if you need more intervals than participant can handle, increase NumSessions
-      while (Itvls_Needed > maxItvl) {
-          NumSessions++;
-          // update total time needed per participant using minimum scan time
-          TotalDuration = (parseFloat(psScanTimeValue) * NumSessions) + fMRITime
-                        + parseFloat(otScanTimeValue);
-         // assume you scan maximum permissble time for previous sessions, calculate how much additional time is needed
-          SessionDuration_Needed = TotalDuration - ((NumSessions - 1) * maxItvl * parseFloat(ScanItvlValue));
-          // find remaining number of intervals needed
-          Itvls_Needed = Math.ceil(SessionDuration_Needed / parseFloat(ScanItvlValue));
-          Itvls_Scanned = (((NumSessions - 1) * maxItvl) + Itvls_Needed);
-      }
-
-      // find cost per participant in terms of all participant costs and session costs
-      PxperPpt = (Itvls_Scanned * parseFloat(CostTimeValue)) + parseFloat(PptCostValue)
-               + (parseFloat(SsnCostValue) * NumSessions);
-
-      // find number of participants you can afford 
-      num_Ppt = Math.floor(parseFloat(rem_budget) / PxperPpt);
-      revised_Cost = num_Ppt * PxperPpt;
-
-      // calculate other values based on the calculated num_Ppt
-      ScanDuration = Itvls_Scanned * parseFloat(ScanItvlValue);
-      efffMRITime = fMRITime + ScanDuration - TotalDuration; // assume extra time used for fMRI
-      if (efffMRITime >= parseFloat(maxTValue)) { // check if fMRI time has hit ceiling
-          efffMRITime = parseFloat(maxTValue); 
-      }
-      effScanTime = efffMRITime * num_Ppt;
-      unusedTime = ScanDuration - ((parseFloat(psScanTimeValue) * NumSessions)
-                 + efffMRITime + parseFloat(otScanTimeValue));
-
-      // save values if this effective scan time is the new highest
-      if (effScanTime > effScanTime_sav) {
-          num_Ppt_sav = num_Ppt
-          effScanTime_sav = effScanTime;
-          NumSessions_sav = NumSessions;
-          ScanDuration_sav = ScanDuration;
-          fMRITime_sav = efffMRITime;
-          revised_Cost_sav = revised_Cost;
-          unusedTime_sav = unusedTime;
-      } else {
-          break;
-      }
-
-      // check if scan time can be increased
-      if (efffMRITime < parseFloat(maxTValue)) { 
-          fMRITime = efffMRITime + parseFloat(ScanItvlValue) - psScanTimeValue; // add one scan interval
-      } 
-  }
-
-  // update plots
-  var cost_p_t = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
-  var total_scantime_pp = Itvls_Scanned * parseFloat(ScanItvlValue)
-  var MRI_overhead_t = (parseFloat(psScanTimeValue) * NumSessions) + parseFloat(otScanTimeValue)
-  var fMRI_c = num_Ppt_sav * fMRITime_sav * cost_p_t;
-  var MRI_overhead_c = num_Ppt_sav * (1 - (fMRITime_sav / total_scantime_pp)) * total_scantime_pp * cost_p_t;
-  var nMRI_overhead_c = num_Ppt_sav * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * NumSessions));
-  plotBarPlot('BudgetBar', budgetValue, fMRI_c, MRI_overhead_c, nMRI_overhead_c, 'Money')
-  plotBarPlot('TimeBar', ScanDuration_sav, fMRITime_sav, MRI_overhead_t, 0, 'Time')
-  plotLinePlot('AccGraph')
-
-  return [num_Ppt_sav, effScanTime_sav, NumSessions_sav, ScanDuration_sav, fMRITime_sav, unusedTime_sav, revised_Cost_sav];
-}
-
 function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
   // custom hover template
   var hoverTemplate = '<b>%{fullData.name}</b><extra>%{x}</extra>';
@@ -921,6 +812,11 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
 
 function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
+    // get sizes of plot
+    var containerWidth = LineEl.getBoundingClientRect().width;
+    var containerHeight = (250/600) * containerWidth;
+    var legendFontSize = containerWidth * 0.02;
+
     // Create a trace for the line
     var lineTrace = {
         x: x_vec,
@@ -963,8 +859,8 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // Define the layout
     var layout = {
-        height: 250,
-        width: 600,
+        height: containerHeight,
+        width: containerWidth,
         title: {
             text: 'Normalized Accuracy vs Scan Duration',
             font: {size: 14},
@@ -975,7 +871,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
             y: 0, // Set legend y-coordinate to 0 (bottom)
             xanchor: 'right', // Anchor legend to right
             yanchor: 'bottom', // Anchor legend to bottom
-            bgcolor: 'rgba(0,0,0,0)'
+            bgcolor: 'rgba(0,0,0,0)',
         },
         xaxis: {
             title: 'fMRI Scan Duration (mins)',

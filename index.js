@@ -423,10 +423,12 @@ function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
     // Define variables
     var tableDiv = document.getElementById(div_el);
     var containerWidth = tableDiv.getBoundingClientRect().width;
-    if (containerWidth > 1000) {
+    if (containerWidth > 500) {
         var fontsz = 12
-        var containerWidth = 500;
-        var containerHeight = 320;
+        var containerWidth = tableDiv.getBoundingClientRect().width * (9/10);
+        var containerHeight = (1/1.75) * containerWidth;
+        //var containerWidth = 500;
+        //var containerHeight = 320;
     } else{
         var fontsz = 8
         var containerWidth = tableDiv.getBoundingClientRect().width * (9/10);

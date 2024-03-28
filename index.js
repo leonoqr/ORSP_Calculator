@@ -24,6 +24,7 @@ const OrderEl = document.getElementById('r_order')
 const CurrTEl = document.getElementById('currT')
 const fMRIrangeEl = document.getElementById('fMRIT');
 const fMRIcurrTEl = document.getElementById('fMRISpan');
+const NcurrTEl = document.getElementById('NSpan');
 const G2OptimaEl = document.getElementById('G2Optima');
 var radioNormalized = document.getElementById("NormAcc");
 var radioCorrelation = document.getElementById("Acc");
@@ -321,67 +322,89 @@ function ReadExcel(workbook,ABCDSheet,HCPSheet,NValue,TValue,type) {
 // ---------------------------------------------------------------
 // ------ 4. Functions to draw plots ------
 function plotHist(html_el, vec, xtitle, ownAcc) {
-      // Plot histrogram
-      var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
-          marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
 
-      // Convert histogram to KDE and plot line plot (filled below line)
-      var sortedX = vec.slice().sort((a, b) => a - b);
-      const new_x = linspace(0, 1, 250);
-      var lineTrace = {x: new_x, y: calculateKDE(vec, 3, 250), opacity: 0.7, 
-            mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
+    var barDiv = document.getElementById(html_el);
+    var containerWidth = barDiv.getBoundingClientRect().width;
+    if (containerWidth > 1000) {
+        var fontsz = 12
+        var containerWidth = 1200;
+        var containerHeight = 300;
+    } else{
+        var fontsz = 10
+        var containerHeight = (1/2.5) * containerWidth;
+    }
 
-      // Arrow trace
-      var arrowTrace = {
-          x: [ownAcc, ownAcc],
-          y: [0, Math.max(...lineTrace.y)],
-          mode: 'lines',
-          line: {
-          color: 'red',
-          width: 2,
-          dash: 'dashdot'
-          }
-      };
+    // Plot histrogram
+    var histTrace = { x: vec, type: 'histogram', opacity: 0.4,
+        marker: {color: 'blue',}, xbins: {start: 0, end: 1, size: (1/250)},};
 
-      if (ownAcc == -2) {
-          var data_v = [histTrace, lineTrace];
-      } else {
-          var data_v = [histTrace, lineTrace, arrowTrace];
-      }
-      var layout = {xaxis: {title: xtitle, range: [0, 1]},
-          yaxis: {title: 'Frequency'}, showlegend: false, height: 300, width: 1200};
-      var config = {displayModeBar: false};
+    // Convert histogram to KDE and plot line plot (filled below line)
+    var sortedX = vec.slice().sort((a, b) => a - b);
+    const new_x = linspace(0, 1, 250);
+    var lineTrace = {x: new_x, y: calculateKDE(vec, 3, 250), opacity: 0.7, 
+          mode: 'lines', fill: 'tozeroy', line: { color: 'lightgreen' }};
 
-      // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
-      Plotly.newPlot(html_el, data_v, layout, config);
+    // Arrow trace
+    var arrowTrace = {
+        x: [ownAcc, ownAcc],
+        y: [0, Math.max(...lineTrace.y)],
+        mode: 'lines',
+        line: {
+        color: 'red',
+        width: 2,
+        dash: 'dashdot'
+        }
+    };
+     if (ownAcc == -2) {
+        var data_v = [histTrace, lineTrace];
+    } else {
+        var data_v = [histTrace, lineTrace, arrowTrace];
+    }
+    var layout = {xaxis: {title: xtitle, range: [0, 1]},
+        yaxis: {title: 'Frequency'}, showlegend: false, height: containerHeight, width: containerWidth};
+    var config = {displayModeBar: false};
+
+    // The 'histogram' ID corresponds to the HTML element where the plot will be rendered
+    Plotly.newPlot(html_el, data_v, layout, config);
 }
 
-function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC) {
+function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC, curr, optim) {
 
     // Define variables
     var tableDiv = document.getElementById(div_el);
+    var containerWidth = tableDiv.getBoundingClientRect().width;
+    var containerHeight = (150/500) * containerWidth;
+    if (containerWidth > 500) {
+        var containerHeight = (150/500) * containerWidth;
+        var fontsz = 12
+    } else{
+        var containerHeight = (250/500) * containerWidth;
+        var fontsz = 10
+    }
+
     var tableData = [{
       type: 'table',
-      columnwidth: [300, 200],
+      columnwidth: [300, 150, 150],
       header: {
-        values: ['Parameters', 'Value'],
+        values: ['Parameters', 'Current value', 'Optimal value'],
         align: 'center',
         line: { width: 1, color: 'black' },
         fill: { color: '#333333' },
-        font: { family: "Arial", size: 12, color: "white" },
+        font: { family: "Arial", size: fontsz, color: "white" },
         height: 20, 
       },
       cells: {
         values: [
             ["Pearson's Correlation", 'Normalized Accuracy',
              'Sample size (N)', 'fMRI scan duration (T)', 'Number of sessions',
-            'Total scan length purchased', 'Unused scan time', 'Revised cost'],
-            [A, NA, N, T, S, SL, US, RC],
+            'Total scan length purchased', 'Unused scan time', 'fMRI Budget'],
+            [A[curr], NA[curr], N[curr], T[curr], S[curr], SL[curr], US[curr], RC[curr]],
+            [A[optim], NA[optim], N[optim], T[optim], S[optim], SL[optim], US[optim], RC[optim]],
         ],
         align: 'center',
         line: { color: "black", width: 0 },
         fill: { color: ['lightgrey', 'white'] },
-        font: { family: "Arial", size: 12, color: ["black"] },
+        font: { family: "Arial", size: fontsz, color: ["black"] },
         height: 20, 
         wrap: 'wrap',
         columnorder: [0, 1],
@@ -389,7 +412,7 @@ function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC) {
     }];
 
     // Define the layout
-    var layout = { height: 200, width: 500,
+    var layout = { height: containerHeight, width: containerWidth,
       margin: { l: 0, r: 0, b: 0, t: 0 }};
     var config = {displayModeBar: false};
     // Plot the table
@@ -399,6 +422,16 @@ function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC) {
 function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
     // Define variables
     var tableDiv = document.getElementById(div_el);
+    var containerWidth = tableDiv.getBoundingClientRect().width;
+    if (containerWidth > 1000) {
+        var fontsz = 12
+        var containerWidth = 500;
+        var containerHeight = 320;
+    } else{
+        var fontsz = 8
+        var containerWidth = tableDiv.getBoundingClientRect().width * (9/10);
+        var containerHeight = (1/1.5) * containerWidth;
+    }
     var new_vec;
 
     // split vector into HCP and ABCD
@@ -418,14 +451,14 @@ function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
         align: 'center',
         line: { width: 1, color: 'black' },
         fill: { color: '#333333' },
-        font: { family: "Arial", size: 12, color: "white" },
+        font: { family: "Arial", size: fontsz, color: "white" },
         height: 20, 
       },
       cells: {
         values: [new_vec_indices, dataset_names, K0, K1, K2, new_vec],
         align: 'center',
         line: { color: "black", width: 0 },
-        font: { family: "Arial", size: 12, color: ["black"] },
+        font: { family: "Arial", size: fontsz, color: ["black"] },
         height: 20, 
         wrap: 'wrap',
         fill: {
@@ -435,7 +468,7 @@ function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
     }];
 
     // Define the layout
-    var layout = { height: 320, width: 500,
+    var layout = { height: containerHeight, width: containerWidth,
       margin: { l: 0, r: 0, b: 0, t: 0 }};
     var config = {displayModeBar: false};
     // Plot the table
@@ -543,9 +576,11 @@ function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_ve
     // Use the returned values here
     plotLinePlot(AccGraphEl, T_vec, normacc_vec, curr_pos)
     // update table
+    var maxAcc = Math.max(...normacc_vec);
     var plot_pos = T_vec.indexOf(curr_pos)
-    optimalParamsTable('Budget_Table', acc_vec[plot_pos], normacc_vec[plot_pos], N_vec[plot_pos], 
-        T_vec[plot_pos], S_vec[plot_pos], SD_vec[plot_pos], U_vec[plot_pos], RC_vec[plot_pos])
+    optimalParamsTable('Budget_Table', acc_vec, normacc_vec, N_vec, 
+        T_vec, S_vec, SD_vec, U_vec, RC_vec, plot_pos, normacc_vec.indexOf(maxAcc))
+    NcurrTEl.textContent = N_vec[plot_pos]
     // update bar plots
     var costperMin = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
     var fMRI_c = T_vec[plot_pos] * N_vec[plot_pos] * costperMin
@@ -690,124 +725,139 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
 }
 
 function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
-  // custom hover template
-  var hoverTemplate = '<b>%{fullData.name}</b><extra>%{x}</extra>';
-  if (mode == 'Money'){
-      var categories = ['Spending ($)'];
-  } else if (mode == 'Time') {
-      var categories = ['Time (mins)'];
-  }
 
-  // Create traces for each category
-  var fMRI = {
-      y: categories,
-      x: [f_v],
-      name: 'fMRI',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      hoverinfo: 'name',
-      marker: {
-          color: '#D2691E',
-      },
-  };
+    // get dimensions
+    var barDiv = document.getElementById(BarEl);
+    var containerWidth = barDiv.getBoundingClientRect().width;
+    if (containerWidth > 500) {
+        var fontsz = 12
+        var containerWidth = 600;
+        var containerHeight = 125;
+    } else{
+        var fontsz = 10
+        var containerWidth = 350;
+        var containerHeight = 75;
+    }
 
-  var MRIoverHead = {
-      y: categories,
-      x: [moh_v],
-      name: 'MRI overhead',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      marker: {
-          color: '#00274e',
-      },
-  };
+    // custom hover template
+    var hoverTemplate = '<b>%{fullData.name}</b><extra>%{x}</extra>';
+    if (mode == 'Money'){
+        var categories = ['Spending ($)'];
+    } else if (mode == 'Time') {
+        var categories = ['Time (mins)'];
+    }
 
-  var nonMRIoverHead = {
-      y: categories,
-      x: [nmoh_v],
-      name: 'non-MRI overhead',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      marker: {
-          color: '#800000',
-      },
-  };
+    // Create traces for each category
+    var fMRI = {
+        y: categories,
+        x: [f_v],
+        name: 'fMRI',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        hoverinfo: 'name',
+        marker: {
+            color: '#D2691E',
+        },
+    };
 
-  var siteCosts = {
-      y: categories,
-      x: [site_v],
-      name: 'Site Costs',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      marker: {
-          color: '#006400',
-      },
-  };
+    var MRIoverHead = {
+        y: categories,
+        x: [moh_v],
+        name: 'MRI overhead',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        marker: {
+            color: '#00274e',
+        },
+    };
 
-  var Unused = {
-      y: categories,
-      x: [unuse_v],
-      name: 'Unused scan time',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      marker: {
-          color: '#800080',
-      }, 
-  };
+    var nonMRIoverHead = {
+        y: categories,
+        x: [nmoh_v],
+        name: 'non-MRI overhead',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        marker: {
+            color: '#800000',
+        },
+    };
 
-  var RemBudg = {
-      y: categories,
-      x: [rem_v],
-      name: 'Remaining budget',
-      type: 'bar',
-      orientation: 'h',
-      hovertemplate: hoverTemplate,
-      marker: {
-          color: '#333333',
-      }, 
-  };
+    var siteCosts = {
+        y: categories,
+        x: [site_v],
+        name: 'Site Costs',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        marker: {
+            color: '#006400',
+        },
+    };
 
-  if (mode == 'Money'){
-      var reqData = [fMRI, MRIoverHead, nonMRIoverHead, siteCosts, Unused, RemBudg];
-      var Title = "Budget breakdown"
-  } else if (mode == 'Time') {
-      var reqData = [fMRI, MRIoverHead, Unused];
-      var Title = "Scan breakdown"
-  }
+    var Unused = {
+        y: categories,
+        x: [unuse_v],
+        name: 'Unused scan time',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        marker: {
+            color: '#800080',
+        }, 
+    };
 
-  // Define the layout
-  var layout = {
-      height: 100, 
-      width: 625,
-      barmode: 'stack',  // Set the bar mode to 'stack'
-      title: {
-          text: Title,
-          font: {size: 14},
-      },
-      legend: {
-          y: 0.5, // Center the legend vertically
-          orientation: 'v',
-          traceorder: 'normal' // Explicitly set trace order to ensure horizontal legend
-      },
-      hovermode: 'closest', 
-      hoverlabel: {
-          bgcolor: 'white', // Set the background color of the hover label
-          bordercolor: 'black', // Set the border color of the hover label
-          font: { size: 12, color: 'black' }, // Set the font size and color of the hover label
-          namelength: -1, // Show full trace name in the hover label
-      },
-      margin: { l: 80, r: 50, b: 15, t: 25 }
-  };
+    var RemBudg = {
+        y: categories,
+        x: [rem_v],
+        name: 'Remaining budget',
+        type: 'bar',
+        orientation: 'h',
+        hovertemplate: hoverTemplate,
+        marker: {
+            color: '#333333',
+        }, 
+    };
 
-  var config = {displayModeBar: false};
+    if (mode == 'Money'){
+        var reqData = [fMRI, MRIoverHead, nonMRIoverHead, siteCosts, Unused, RemBudg];
+        var Title = "Budget breakdown"
+    } else if (mode == 'Time') {
+        var reqData = [fMRI, MRIoverHead, Unused];
+        var Title = "Scan breakdown"
+    }
 
-  // Plot the chart
-  Plotly.newPlot(BarEl, reqData, layout, config);
+    // Define the layout
+    var layout = {
+        height: containerHeight, 
+        width: containerWidth,
+        barmode: 'stack',  // Set the bar mode to 'stack'
+        title: {
+            text: Title,
+            font: {size: fontsz},
+        },
+        legend: {
+            y: 0.5, // Center the legend vertically
+            orientation: 'v',
+            traceorder: 'normal', // Explicitly set trace order to ensure horizontal legend
+            font: { size: fontsz, color: 'black' },
+        },
+        hovermode: 'closest', 
+        hoverlabel: {
+            bgcolor: 'white', // Set the background color of the hover label
+            bordercolor: 'black', // Set the border color of the hover label
+            font: { size: fontsz, color: 'black' }, // Set the font size and color of the hover label
+            namelength: -1, // Show full trace name in the hover label
+        },
+        margin: { l: 80, r: 50, b: 15, t: 25 }
+    };
+
+    var config = {displayModeBar: false};
+
+    // Plot the chart
+    Plotly.newPlot(BarEl, reqData, layout, config);
 }
 
 function plotLinePlot(LineEl, x_vec, y_vec, pt) {
@@ -815,7 +865,6 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
     // get sizes of plot
     var containerWidth = LineEl.getBoundingClientRect().width;
     var containerHeight = (250/600) * containerWidth;
-    var legendFontSize = containerWidth * 0.02;
 
     // Create a trace for the line
     var lineTrace = {
@@ -958,7 +1007,9 @@ function checkAccCalcInputs() {
 
 // ------ Run these functions when script is called -------
 // Plot initial graphs for budget calculator
-optimalParamsTable('Budget_Table')
+optimalParamsTable('Budget_Table', ['undefined', 'undefined'], ['undefined', 'undefined'], ['undefined', 'undefined'],
+   ['undefined', 'undefined'], ['undefined', 'undefined'], ['undefined', 'undefined'], ['undefined', 'undefined'], 
+   ['undefined', 'undefined'], 1, 0)
 plotBarPlot('BudgetBar', 2000, 1000, 10000, 2000, 1000, 2000, 'Money')
 plotBarPlot('TimeBar', 30, 10, 0, 0, 20, 0, 'Time')
 var x_data = [1, 2, 3, 4, 5];

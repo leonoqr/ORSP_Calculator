@@ -131,6 +131,12 @@ function linspace(start, end, numPoints) {
     return Array.from({ length: numPoints }, (_, i) => start + i * step);
 }
 
+function convertToTwoSigFigs(arr) {
+    return arr.map(function(element) {
+        return parseFloat(element).toPrecision(2);
+    });
+}
+
 // ------------------------------------------------------------------------
 // ------ 3. Functions to read values from the excel sheets ------
 function getNTParams(version, ownAcc) {
@@ -443,7 +449,19 @@ function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
       new_vec = vec.slice(0, 17).map(value => parseFloat(value.toPrecision(2)));
     }
 
-  // Define your table data
+    // Sort data based on K0 (descending order)
+    var sortedData = new_vec.map((value, index) => ({ index: index, value: value }))
+                        .sort((a, b) => K0[b.index] - K0[a.index]);
+    // Extract sorted indices
+    var sortedIndices = sortedData.map(item => item.index + 1);
+    // Map sorted data arrays based on the sorted indices
+    var sortedDatasetNames = sortedIndices.map(index => dataset_names[index - 1]);
+    var sortedK0 = sortedIndices.map(index => K0[index - 1]);
+    var sortedK1 = sortedIndices.map(index => K1[index - 1]);
+    var sortedK2 = sortedIndices.map(index => K2[index - 1]);
+    var sortedNewVec = sortedIndices.map(index => new_vec[index - 1]);
+
+    // Define your table data
     var new_vec_indices = new_vec.map((_, index) => index + 1);
     var tableData = [{
       type: 'table',
@@ -457,7 +475,7 @@ function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
         height: 20, 
       },
       cells: {
-        values: [new_vec_indices, dataset_names, K0, K1, K2, new_vec],
+        values: [new_vec_indices, sortedDatasetNames, sortedK0, sortedK1, sortedK2, sortedNewVec],
         align: 'center',
         line: { color: "black", width: 0 },
         font: { family: "Arial", size: fontsz, color: ["black"] },
@@ -482,7 +500,7 @@ function getBudgetParams() {
   const budgetValue = budget_El.value;
   const maxTValue = maxT_El.value;
   const minTValue = minT_El.value;
-  const ScanItvlValue = ScanItvl_El.value;
+  var ScanItvlValue = ScanItvl_El.value;
   const CostTimeValue = CostTime_El.value;
   const psScanTimeValue = psScanTime_El.value;
   const otScanTimeValue = otScanTime_El.value;
@@ -492,6 +510,7 @@ function getBudgetParams() {
   let perSiteValue = perSite_El.value;
   let oneTimeSiteValue = oneTimeSite_El.value;
   const maxSValue = maxS_El.value;
+  var acc_option = OrderEl.value;
 
   // Display error message if any values are blank
   if (budgetValue === "") {
@@ -520,11 +539,23 @@ function getBudgetParams() {
       alert(`ERROR: Budget ($${budgetValue}) is less than cost of 1 scan session ($${CostTimeValue})`); 
   } else if (parseFloat(maxTValue) < parseFloat(minTValue)) {
       alert(`ERROR: Maximum fMRI scan time (${maxTValue} min) is less than minimum fMRI scan time (${minTValue} min)`);
-  } else if (parseFloat(maxSValue) < parseFloat(ScanItvlValue)) {
-      alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than scan time interval (${ScanItvlValue} min). Please set maximum scan time to be same as scan time interval (We understand that you don't need to use the whole session but this causes a bug in the code.`);
   } else if (parseFloat(maxSValue) < parseFloat(psScanTimeValue)) {
       alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
   } else {
+      // check if any of the options are blank
+      if (acc_option === 'own') {
+          // error if K values are empty
+          if (BudgK0.value === "") {
+              alert("ERROR: K0 is empty");
+              return;
+          } else if (BudgK1.value === "") {
+              alert("ERROR: K1 is empty");
+              return;
+          } else if (BudgK2.value === "") {
+              alert("ERROR: K2 is empty");
+              return;
+          }
+      }
       // set default values if site values are blank
       if (numSiteValue === "") {
           numSiteValue = 1;
@@ -534,6 +565,12 @@ function getBudgetParams() {
       } 
       if (oneTimeSiteValue === "") {
           oneTimeSiteValue = 0;
+      }
+
+      // change scan interval value if participant cannot tolerate the full interval
+      if (parseFloat(maxSValue) < parseFloat(ScanItvlValue)) {
+          alert(`WARNING: Time participant can tolerate (${maxSValue} min) is less than scan time interval (${ScanItvlValue} min). Scan time interval will be set to ${maxSValue} min (i.e. full interval is not used)`)
+          ScanItvlValue = maxSValue
       }
 
       // update slider range
@@ -580,8 +617,8 @@ function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_ve
     // update table
     var maxAcc = Math.max(...normacc_vec);
     var plot_pos = T_vec.indexOf(curr_pos)
-    optimalParamsTable('Budget_Table', acc_vec, normacc_vec, N_vec, 
-        T_vec, S_vec, SD_vec, U_vec, RC_vec, plot_pos, normacc_vec.indexOf(maxAcc))
+    optimalParamsTable('Budget_Table', convertToTwoSigFigs(acc_vec), convertToTwoSigFigs(normacc_vec), 
+        N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec, plot_pos, normacc_vec.indexOf(maxAcc))
     NcurrTEl.textContent = N_vec[plot_pos]
     // update bar plots
     var costperMin = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
@@ -692,12 +729,13 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
 
         // run accuracy calculation based on accuracy option
         if (acc_option === 'own'){
-            // calculate accuracy based on K values
+            // calculate accuracy based on K values, throw error if not filled in
             var val1 = BudgK0.value;
             var val2 = BudgK1.value;
             var val3 = BudgK2.value;
-            acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime).toPrecision(2));
-            normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime).toPrecision(2));
+
+            acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime));
+            normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime));
         } else {
             // choose which xlsx to read
             if (acc_option === 'original'){
@@ -866,7 +904,18 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // get sizes of plot
     var containerWidth = LineEl.getBoundingClientRect().width;
-    var containerHeight = (250/600) * containerWidth;
+    var containerHeight = (200/600) * containerWidth;
+    if (containerWidth > 500) {
+        var fontsz = 12;
+        var markersz = 10;
+        var linewidth = 2;
+        var xloc = 1;
+    } else{
+        var fontsz = 10
+        var markersz = 5
+        var linewidth = 1
+        var xloc = 2;
+    }
 
     // Create a trace for the line
     var lineTrace = {
@@ -877,7 +926,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
         name: 'Accuracy',
         line: {
             color: 'orange', 
-            width: 2,
+            width: linewidth,
         },
     };
 
@@ -890,7 +939,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
         type: 'scatter',
         name: 'Optimal parameters',
         marker: {
-            size: 10,
+            size: markersz,
             color: 'green',  
         },
     };
@@ -903,7 +952,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
         name: 'Current parameters',
         line: {
         color: 'red',
-        width: 2,
+        width: linewidth,
         dash: 'dashdot'
         }
     };
@@ -914,26 +963,27 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
         width: containerWidth,
         title: {
             text: 'Normalized Accuracy vs Scan Duration',
-            font: {size: 14},
+            font: {size: fontsz},
         },
         showlegend: true,
         legend: {
-            x: 1, // Set legend x-coordinate to 1 (right)
+            x: xloc, // Set legend x-coordinate to 1 (right)
             y: 0, // Set legend y-coordinate to 0 (bottom)
             xanchor: 'right', // Anchor legend to right
             yanchor: 'bottom', // Anchor legend to bottom
             bgcolor: 'rgba(0,0,0,0)',
+            font: {size: (fontsz-2)},
         },
         xaxis: {
             title: 'fMRI Scan Duration (mins)',
             titlefont: {
-                size: 12,
+                size: fontsz,
             },
         },
         yaxis: {
             title: 'Accuracy',
             titlefont: {
-                size: 12,
+                size: fontsz,
             },
         },
         margin: { l: 60, r: 10, b: 30, t: 25 },
@@ -942,7 +992,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
     var config = { displayModeBar: false };
 
     // Plot the chart
-    Plotly.newPlot(LineEl, [scatterTrace, lineTrace, arrowTrace], layout, config);
+    Plotly.newPlot(LineEl, [scatterTrace, lineTrace, arrowTrace], layout, config)
 }
 // ----------------------------------------
 // ------ 4. Functions to draw plots ------

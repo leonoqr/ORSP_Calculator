@@ -355,34 +355,34 @@ button:hover {
 @media (max-width: 1080px) {
 
 body {
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .menu-bar a {
-    font-size: 14px;
+    font-size: 10px;
 }
 
 .section-divider {
     border: 1px solid #ddd; /* Adjust the border color */
-    margin: 5px 0; /* Adjust the margin to control the space around the divider */
+    margin: 3px 0; /* Adjust the margin to control the space around the divider */
 }
 
 h1 {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 h2 {
-  font-size: 14px;
-  margin-bottom: 3px;
+  font-size: 12px;
+  margin-bottom: 2px;
 }
 
 .transparent-button {
-    padding: 5px 5px; /* Adjust the padding as needed */
-    font-size: 12px;
+    padding: 3px 3px; 
+    font-size: 10px;
 }
 
 #r_order {
-    font-size: 12px; 
+    font-size: 10px; 
     width: 80%; 
     margin-left: 10px;
 }

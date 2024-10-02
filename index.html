@@ -14,17 +14,19 @@
         <ul>
             <li><a onclick="jumpToSection('about')">About</a></li>
             <li><a onclick="jumpToSection('budgetcalc')">Budget and Scan Billing Calculator</a></li>
+            <!--
             <li><a onclick="jumpToSection('acccalc')">Accuracy Calculator</a></li>
+            -->
         </ul>
     </div>
 
     <!-- Section 1: Introduction -->
     <section id="about">
     <div class="container" id="container1">
-        <h1>Ooi2024 ORSP Calculator</h1>
+        <h1>Ooi2024 ME Calculator</h1>
         <h2>Citation</h2>
         <hr class="section-divider">
-        <p> Ooi LQR, Orban C, Nichols TE, Zhang S, Tan TWK, Kong R, Marek S, Dosenbach NUF, Laumann T, Gordon EM, Zhou JH, Bzdok D, Eickhoff SB, Holmes AJ, Yeo BTT. <a href="https://www.biorxiv.org/content/10.1101/2024.02.16.580448v1"> MRI economics: Balancing sample size and scan duration in brain wide association studies</a>. bioRxiv, 2024. 
+        <p> Ooi LQR, Orban C, Nichols TE, Zhang S, Tan TWK, Kong R, Marek S, Dosenbach NUF, Laumann T, Gordon EM, Zhou JH, Bzdok D, Eickhoff SB, Holmes AJ, Yeo BTT. <a href="https://www.biorxiv.org/content/10.1101/2024.02.16.580448v2"> MRI economics: Balancing sample size and scan duration in brain wide association studies</a>. bioRxiv, 2024. 
         </p>
         <h2>Description</h2>
         <hr class="section-divider">
@@ -33,227 +35,8 @@
         <h2>Updates</h2>
         <hr class="section-divider">
         <p> v0.01 (xx/xx/2024): Initial release of web app <br><br>
-            <b>Bugs and questions:</b> Please contact Leon Ooi at leonooiqr@gmail.com or Thomas Yeo at yeoyeo02@gmail.com. </p>
-    </div>
-    </section>
-
-    <!-- Section 2: Budget and Scan Billing Calculator -->
-    <section id="budgetcalc">
-    <div class="flex-container">
-        <div class="container third_container" style="border-right: 1px solid #ddd;">
-            <h1>Budget and Scan Billing Calculator</h1>
-            <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs. <br><br>
-            Hover over each input for a more detailed description of what to enter.</p>
-            <hr class="section-divider">
-            <button class="transparent-button" onmouseover="toggleMoreText('accMethod-text', true)" onmouseout="toggleMoreText('accMethod-text', false)">Accuracy calculation method:</button><br>
-            <select id="r_order">
-            <option value="original">Average over 36 phenotypes: original run order</option>
-            <option value="randomized">Average over 36 phenotypes: randomized run order</option>
-            <option value="own">Enter your own K0, K1 and K2 values</option>
-            </select>
-            <div id="accMethod-text" class="more-text" style="color: navy;">
-            <p> Method of which to calculate estimate accuracy. Can either take parameters that were estimated from the average of 36 ABCD and HCP phenotypes in the paper, or enter your parameters. There is an option to use the original run order, or randomized run order.</p>
-            </div>
-
-            <div id="KFields" style="display: none;">
-                <p>Enter K values:
-                <input type="number" id="BudgK0" placeholder="K0">
-                <input type="number" id="BudgK1" placeholder="K1">
-                <input type="number" id="BudgK2" placeholder="K2"></p>
-            </div>
-
-            <hr class="section-divider">
-            <h2>1. Monetary constraints</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('budget-text', true)" onmouseout="toggleMoreText('budget-text', false)">fMRI budget ($):</button>
-            <input type="number" id="budget" name="budget">
-            <div id="budget-text" class="more-text" style="color: navy;">
-            <p>The amount of money you have allocated for the fMRI portion of your study in dollars.</p>
-            </div>
-            <hr class="section-divider">
-
-            <h2>2. fMRI time range</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('maxT-text', true)" onmouseout="toggleMoreText('maxT-text', false)">Max fMRI (mins):</button>
-            <input type="number" id="maxT" name="maxT">
-            <div id="maxT-text" class="more-text" style="color: navy;">
-            <p>Amount of fMRI scan time after which researchers find additional scan time unnecessary. E.g. if the researcher does not want spend more than an hour on fMRI, this can be set to 60 mins.</p>
-            </div><br>
-            <button class="transparent-button" onmouseover="toggleMoreText('minT-text', true)" onmouseout="toggleMoreText('minT-text', false)">Min fMRI (mins):</button>
-            <input type="number" id="minT" name="minT">
-            <div id="minT-text" class="more-text" style="color: navy;">
-            <p> Amount of fMRI scan time where researchers feel confident they will have minimum amount of usable data. E.g. if researcher is scanning kids, they might want to set this to a higher amount as more frames will have to be discared due to motion as compared to adults.</p>
-            </div>
-            <hr class="section-divider">
-
-            <h2>3. MRI provider constraints</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('ScanItvl-text', true)" onmouseout="toggleMoreText('ScanItvl-text', false)">Time quantum (mins):</button>
-            <input type="number" id="ScanItvl" name="ScanItvl">
-            <div id="ScanItvl-text" class="more-text" style="color: navy;">
-            <p> Time interval at which the MRI center charges the researcher (e.g 15 min, 30 min or 1 hour).</p>
-            </div><br>
-            <button class="transparent-button" onmouseover="toggleMoreText('CostTime-text', true)" onmouseout="toggleMoreText('CostTime-text', false)">MRI cost per time ($):</button>
-            <input type="number" id="CostTime" name="CostTime">
-            <div id="CostTime-text" class="more-text" style="color: navy;">
-            <p> This should how much MRI provider charges PLUS manpower costs (e.g. if the research assistant needs to be present during the scan, factor in the cost involved as well).</p>
-            </div>
-            <hr class="section-divider">
-        </div>
-
-        <div class="container third_container" style="border-right: 1px solid #ddd;">
-            <h2>4. Overhead MRI time</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('otScanTime-text', true)" onmouseout="toggleMoreText('otScanTime-text', false)">One-time (mins):</button>
-            <input type="number" id="otScanTime" name="otScanTime"><br>
-            <div id="otScanTime-text" class="more-text" style="color: navy;">
-            <p> Scan time incurred due to other sequences being collected, or other one-time MRI scanning events (e.g. Diffusion MRI, body imaging, practice scan to acclimatize participant). </p>
-            </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('psScanTime-text', true)" onmouseout="toggleMoreText('psScanTime-text', false)">Per-session (mins):</button>
-            <input type="number" id="psScanTime" name="psScanTime">
-            <div id="psScanTime-text" class="more-text" style="color: navy;">
-            <p> Scan time overhead due to unavoidable setup for each scan session (e.g. having to acqquire T1, field map, participant set-up).</p>
-            </div>
-            <hr class="section-divider">
-
-            <h2>5. Overhead non-MRI cost</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('PptCost-text', true)" onmouseout="toggleMoreText('PptCost-text', false)">Per participant ($):</button>
-            <input type="number" id="PptCost" name="PptCost"><br>
-            <div id="PptCost-text" class="more-text" style="color: navy;">
-            <p> Costs related to recruitment consent (which might be influenced by target populations). Also, additional costs due to collecting other non-imaging tests (e.g. blood markers) or non-MRI imaging tests (e.g. PET) should go here as well. Other costs such as mock scanner practice for children can be included here.</p>
-            </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('SsnCost-text', true)" onmouseout="toggleMoreText('SsnCost-text', false)">Per session ($):</button>
-            <input type="number" id="SsnCost" name="SsnCost">
-            <div id="SsnCost-text" class="more-text" style="color: navy;">
-            <p> Logistics related to per session costs (e.g. time and effort to coordinate with participants, meeting and greeting, pre-scan safety checks, transfer of data to database, paperwork etc).</p>
-            </div>
-            <hr class="section-divider">
-
-            <h2>6. Costs per imaging site</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('numSite-text', true)" onmouseout="toggleMoreText('numSite-text', false)">Num of sites:</button>
-            <input type="number" id="numSite" name="numSite" placeholder="1"><br>
-            <div id="numSite-text" class="more-text" style="color: navy;">
-            <p> Number of sites to use for the study. If you leave this blank, it will be assumed that study is run over 1 site. </p>W
-            </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('perSite-text', true)" onmouseout="toggleMoreText('perSite-text', false)">Cost per site ($):</button>
-            <input type="number" id="perSite" name="perSite" placeholder="0"><br>
-            <div id="perSite-text" class="more-text" style="color: navy;">
-            <p> Costs incurred per site. E.g. hiring research assistants to run scans per site. If you leave this blank the cost will be assumed to be $0.</p>
-            </div>
-            <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">Costs for all sites ($):</button>
-            <input type="number" id="oneTimeSite" name="oneTimeSite" placeholder="0">
-            <div id="oneTimeSite-text" class="more-text" style="color: navy;">
-            <p> One-time costs that will be incurred from managing more than 1 site and does not scale with more sites. E.g. coordination meetings for site PIs. If you leave this blank the cost will be assumed to be $0.</p>
-            </div>
-            <hr class="section-divider">
-
-            <h2>7. Participant scan time constraints</h2>
-            <button class="transparent-button" onmouseover="toggleMoreText('maxS-text', true)" onmouseout="toggleMoreText('maxS-text', false)">Max session (mins):</button>
-            <input type="number" id="maxS" name="maxS">
-            <div id="maxS-text" class="more-text" style="color: navy;">
-            <p> Researcher might want to vary this based on the population being studied (e.g. children may only be able to tolerate short scan times, whereas PhD students needing to graduate might be able to tolerate very long scan times) </p>
-            </div>
-            <hr class="section-divider">
-
-            <button id="CalcBudg">Calculate budgeting and scanning design</button>
-        </div>
-
-        <div class="container third_container">
-            <div id="AccGraph"></div>
-            <hr class="section-divider">
-            <div id="currT" style="display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center;"">
-                    <p style="margin-right: 10px;" style="font-size:12">fMRI scan duration (T): <span id="fMRISpan">1</span> | Number of participants (N): <span id="NSpan">0</span></p>
-                    <button id="G2Optima">Go to optima</button>
-                </div>
-                <input type="range" id="fMRIT" min="1" max="100" step="1" value="1">
-            </div><br>
-            <div id="Budget_Table"></div><br>
-            <div id="BudgetBar"></div><br>
-            <div id="TimeBar"></div>
-        </div>
-    </div>
-    </section>
-
-    <!-- Section 3: Accuracy Calculator -->
-    <section id="acccalc">
-    <!-- Calculator Description -->
-    <div class="flex-container">
-        <div class="container third_container">
-            <h1>Accuracy Calculator</h1>
-            <p> This calculator provides the mean (± 95% confidence intervals) and median of BWAS prediction accuracy for a given sample size (N) and scan duration (T). </p><br>
-            <label for="N">Participants (N):</label>
-            <input type="number" id="N" name="N" value="792" oninput="updateSlider(this.value)"> <br>
-            <input type="range" id="NSlider" min="0" max="99999" step="1" value="792" oninput="updateInputBox(this.value)"><br>
-            <label for="T">Scan duration (T in mins):</label> 
-            <input type="number" id="T" name="T" value="58" oninput="updateSlider(this.value)"> <br>
-            <input type="range" id="TSlider" min="0" max="999" step="1" value="58" oninput="updateInputBox(this.value)"><br>
-            <hr class="section-divider">
-            <p> If you have calculated your own K0, K1, K2 values, you can enter them here: <br><br>
-            K0: <input type="number" id="AccK0" placeholder="K0"><br>
-            K1: <input type="number" id="AccK1" placeholder="K1"><br>
-            K2: <input type="number" id="AccK2" placeholder="K2"></p>
-            <div id="ownAccresult" style="display:none;"></div>
-            <button id="D_pheno">Display phenotype on bar chart</button>
-            <button id="removeD_pheno">Remove from display</button>
-        </div>
-
-        <!-- Switching Container Area -->
-        <div class="container-area">
-            <div class="tabs-container">
-                <div class="tabs">
-                    <input type="radio" id="Orig" name="Ordertab" checked data-container="OrigAcc" />
-                    <label class="tab" for="Orig">Original order</label>
-                    <input type="radio" id="Random" name="Ordertab" data-container="RandAcc" />
-                    <label class="tab" for="Random">Randomized order</label>
-                    <span class="glider"></span>
-                </div>
-
-                <div class="tabs">
-                    <input type="radio" id="NormAcc" name="Acctab" checked />
-                    <label class="tab" for="NormAcc">Accuracy (Normalized)</label>
-                    <input type="radio" id="Acc" name="Acctab" />
-                    <label class="tab" for="Acc">Accuracy (Not normalized)</label>
-                    <span class="glider"></span>
-                </div>
-            </div>
-
-            <div id="OrigAcc" class="container-content">
-		<div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
-                    <div id="oAccHist"></div>
-                    <p id="oAcc_Results">
-                    Mean prediction accuracy: Uncalculated<br>
-                    Median prediction accuracy: Uncalculated<br><br>
-                    </p>
-		</div>
-		<div class="short_container">
-		    <div class="half-container">
-		        <p> ABCD Phenotypes </p>
-		        <div id="ABCD_oAccTable"></div>
-	 	    </div>
-		    <div class="half-container">
-		        <p> HCP Phenotypes </p>
-		        <div id="HCP_oAccTable"></div>
-		    </div>
-                </div>
-            </div>
-
-            <div id="RandAcc" class="container-content">
-                <div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
-                    <div id="rAccHist"></div>
-                    <p id="rAcc_Results">
-                    Mean prediction accuracy: Uncalculated<br>
-                    Median prediction accuracy: Uncalculated<br><br>
-                    </p>
-		</div>
-		<div class="short_container">
-		    <div class="half-container">
-		        <p> ABCD Phenotypes </p>
-		        <div id="ABCD_rAccTable"></div>
-	 	    </div>
-		    <div class="half-container">
-		        <p> HCP Phenotypes </p>
-		        <div id="HCP_rAccTable"></div>
-		    </div>
-                </div>
-            </div>
-        </div>
+            <b>Bugs and questions:</b> Please contact Leon Ooi (leonooiqr@gmail.com), Shaoshi Zhang (0zhangshaoshi0@gmail.com
+) or Thomas Yeo(yeoyeo02@gmail.com). </p>
     </div>
     </section>
 
@@ -261,40 +44,27 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
     <!-- Include Plotly.js for graph plotting -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Scripts to generate values -->
-    <script src="index.js"></script>
-    <!-- Script for scrolling behavior -->
+    <!-- Script for navigating pages -->
     <script>
     function jumpToSection(containerId) {
-        var container = document.getElementById(containerId);
-
-        if (container) {
-            var offset = container.getBoundingClientRect().top + window.scrollY;
-            var margin = 50; // Adjust this value to set the margin height
-
-            // Scroll to the beginning of the container with an offset
-            window.scrollTo({ top: offset - margin, behavior: 'smooth' });
+        // Check the containerId and redirect to the appropriate page
+        if (containerId === 'acccalc') {
+            window.location.href = 'acccalc.html';
+        } else if (containerId === 'budgetcalc') {
+            window.location.href = 'budgetcalc.html';
+        } else if (containerId === 'about') {
+            window.location.href = 'index.html';
         }
-    }
+    } 
     </script>
-    <!-- Script to toggle more text -->
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_TRACKING_ID"></script>
     <script>
-    function toggleMoreText(sectionId, show) {
-      var moreText = document.getElementById(sectionId);
-          moreText.style.display = show ? 'block' : 'none';
-    }
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'YOUR_TRACKING_ID');
     </script>
-    <!-- Script to toggle more number boxes -->
-    <script>
-    document.getElementById('r_order').addEventListener('change', function() {
-        var selectedOption = this.value;
-        var KFields = document.getElementById('KFields');
-        if (selectedOption === 'own') {
-            KFields.style.display = 'block';
-        } else {
-            KFields.style.display = 'none';
-        }
-    });
-    </script>
+
 </body>
 </html>

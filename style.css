@@ -62,6 +62,19 @@ img {
   word-wrap: break-word; 
 }
 
+.title-container {
+  width: 80%;
+  height: vh; /* % of the viewport height */
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  max-width: none;
+  margin: 0 auto;
+  border-radius: 5px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  word-wrap: break-word; 
+}
 .flex-container {
   width: 100%;
   height: 100vh;
@@ -72,6 +85,7 @@ img {
 
 .tabs-container {
     display: flex;
+    justify-content: center;
     width: 100%; /* Ensure the tabs container takes up the full width */
 }
 
@@ -123,6 +137,27 @@ img {
   margin-bottom: 10px;
 }
 
+.table-container {
+    width: 100%;
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: auto;
+}
+
+#phenotype-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#phenotype-table th, #phenotype-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#phenotype-table th {
+    background-color: #f2f2f2;
+}
 
 /* tab settings */
 .tabs {
@@ -132,7 +167,7 @@ img {
   box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.3), 0 6px 12px 0 rgba(0, 0, 0, 0.3);
   padding: 0.75rem;
   border-radius: 99px; /* just a high number to create pill effect */
-  width: 40%; 
+  width: 80%; 
   margin-right: 15px;
   * {
         z-index: 2;
@@ -153,16 +188,33 @@ img {
   transition: color 0.15s ease-in;
 }
 
+.tab-content {
+    width: 80%;              /* Set the width of the tab content */
+    margin: 0 auto;          /* Center it horizontally */
+    visibility: hidden;   /* Hidden but still in the DOM */
+    opacity: 0;           /* Fully transparent */
+    transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease; /* Smooth transition */
+    height: 0;            /* Collapse height to 0 when hidden */
+}
+
+.tab-content.active {
+    visibility: visible;  /* Make it visible */
+    opacity: 1;           /* Fully opaque */
+    height: 100%;         /* Expand height */
+    width: 80%;
+    margin: 0 auto;          /* Center it */
+}
+
 .glider {
     position: absolute;
     top: 0;
     left: 0;
-    height: 100%; /* Take up the full height of the parent container */
-    min-width: 50%; /* Ensure the glider covers at least half the width of the parent container */
-    background-color: rgba(139, 0, 0, 0.7); /* Set the background color to dark red */
+    height: 100%; /* Ensure it takes up the full height of the parent container */
+    background-color: rgba(139, 0, 0, 0.7); /* Dark red color */
     z-index: 1;
-    border-radius: 50px; /* Use half of the height to create a pill shape */
-    transition: 0.25s ease-out;
+    border-radius: 50px; /* Create a pill shape */
+    transition: 0.25s ease-out; /* Smooth transition */
+    width: 0; /* Initial width to prevent the glider from disappearing */
 }
 
 input[type="radio"] {
@@ -305,6 +357,16 @@ input[type="range"] {
     display: block; 
 }
 
+.button-container {
+    display: flex;              /* Enable flexbox */
+    justify-content: flex-end; /* Align content to the right */
+    padding: 10px;            /* Optional: Add some spacing around the container */
+}
+
+.next-tab-button {
+    margin-left: auto; /* This ensures the button stays at the end */
+}
+
 button {
   background-color: #333;
   color: white;
@@ -373,7 +435,7 @@ h1 {
 
 h2 {
   font-size: 12px;
-  margin-bottom: 2px;
+  margin-bottom: 0px;
 }
 
 .transparent-button {

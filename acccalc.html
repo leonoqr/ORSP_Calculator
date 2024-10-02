@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget and Scan Billing Calculator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Menu -->
+    <div class="menu-bar">
+        <ul>
+            <li><a onclick="jumpToSection('about')">About</a></li>
+            <li><a onclick="jumpToSection('budgetcalc')">Budget and Scan Billing Calculator</a></li>
+            <li><a onclick="jumpToSection('acccalc')">Accuracy Calculator</a></li>
+        </ul>
+    </div>
+     <!-- Section 3: Accuracy Calculator -->
+    <section id="acccalc">
+    <div class="title-container">
+    <h1>Accuracy Calculator</h1>
+    <p> This calculator provides the mean (± 95% confidence intervals) and median of BWAS prediction accuracy for a given sample size (N) and scan duration (T).</p>
+    </div>
+    <!-- Calculator Description -->
+    <div class="flex-container">
+        <div class="container third_container">
+            <label for="N">Participants (N):</label>
+            <input type="number" id="N" name="N" value="792" oninput="updateSlider(this.value)"> <br>
+            <input type="range" id="NSlider" min="0" max="99999" step="1" value="792" oninput="updateInputBox(this.value)"><br>
+            <label for="T">Scan duration (T in mins):</label> 
+            <input type="number" id="T" name="T" value="58" oninput="updateSlider(this.value)"> <br>
+            <input type="range" id="TSlider" min="0" max="999" step="1" value="58" oninput="updateInputBox(this.value)"><br>
+            <hr class="section-divider">
+            <p> If you have calculated your own K0, K1, K2 values, you can enter them here: <br><br>
+            K0: <input type="number" id="AccK0" placeholder="K0"><br>
+            K1: <input type="number" id="AccK1" placeholder="K1"><br>
+            K2: <input type="number" id="AccK2" placeholder="K2"></p>
+            <div id="ownAccresult" style="display:none;"></div>
+            <button id="D_pheno">Display phenotype on bar chart</button>
+            <button id="removeD_pheno">Remove from display</button>
+        </div>
+
+        <!-- Switching Container Area -->
+        <div class="container-area">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <input type="radio" id="Orig" name="Ordertab" checked data-container="OrigAcc" />
+                    <label class="tab" for="Orig">Original order</label>
+                    <input type="radio" id="Random" name="Ordertab" data-container="RandAcc" />
+                    <label class="tab" for="Random">Randomized order</label>
+                    <span class="glider"></span>
+                </div>
+
+                <div class="tabs">
+                    <input type="radio" id="NormAcc" name="Acctab" checked />
+                    <label class="tab" for="NormAcc">Accuracy (Normalized)</label>
+                    <input type="radio" id="Acc" name="Acctab" />
+                    <label class="tab" for="Acc">Accuracy (Not normalized)</label>
+                    <span class="glider"></span>
+                </div>
+            </div>
+
+            <div id="OrigAcc" class="container-content">
+		<div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
+                    <div id="oAccHist"></div>
+                    <p id="oAcc_Results">
+                    Mean prediction accuracy: Uncalculated<br>
+                    Median prediction accuracy: Uncalculated<br><br>
+                    </p>
+		</div>
+		<div class="short_container">
+		    <div class="half-container">
+		        <p> ABCD Phenotypes </p>
+		        <div id="ABCD_oAccTable"></div>
+	 	    </div>
+		    <div class="half-container">
+		        <p> HCP Phenotypes </p>
+		        <div id="HCP_oAccTable"></div>
+		    </div>
+                </div>
+            </div>
+
+            <div id="RandAcc" class="container-content">
+                <div class="short_container" style="border-bottom: 1px solid #ddd; padding: 10px;">
+                    <div id="rAccHist"></div>
+                    <p id="rAcc_Results">
+                    Mean prediction accuracy: Uncalculated<br>
+                    Median prediction accuracy: Uncalculated<br><br>
+                    </p>
+		</div>
+		<div class="short_container">
+		    <div class="half-container">
+		        <p> ABCD Phenotypes </p>
+		        <div id="ABCD_rAccTable"></div>
+	 	    </div>
+		    <div class="half-container">
+		        <p> HCP Phenotypes </p>
+		        <div id="HCP_rAccTable"></div>
+		    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- Include Sheetjs to read xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+    <!-- Include Plotly.js for graph plotting -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Scripts to generate values -->
+    <script src="acccalc.js"></script>
+    <!-- Script for scrolling behavior -->
+    <script>
+    function jumpToSection(containerId) {
+        // Check the containerId and redirect to the appropriate page
+        if (containerId === 'acccalc') {
+            window.location.href = 'acccalc.html';
+        } else if (containerId === 'budgetcalc') {
+            window.location.href = 'budgetcalc.html';
+        } else if (containerId === 'about') {
+            window.location.href = 'index.html';
+        }
+    }
+    </script>
+</body>
+</html>

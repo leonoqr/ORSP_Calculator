@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget and Scan Billing Calculator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Menu -->
+    <div class="menu-bar">
+        <ul>
+            <li><a onclick="jumpToSection('about')">About</a></li>
+            <li><a onclick="jumpToSection('budgetcalc')">Budget and Scan Billing Calculator</a></li>
+            <!--
+            <li><a onclick="jumpToSection('acccalc')">Accuracy Calculator</a></li>
+            -->
+        </ul>
+    </div>
+
+    <!-- Section 2: Budget and Scan Billing Calculator -->
+    <section id="budgetcalc">
+    <div class="title-container">
+        <h1>Budget and Scan Billing Calculator</h1>
+        <p> This calculator provides the optimal scan time considering the fMRI time range, provider constraints and other overhead costs. Hover over each input for a more detailed description of what to enter. Default values (in gray) are used if no values are entered for a particular box.</p>
+    </div>
+
+    <div class="tabs-container">
+        <div class="tabs">
+            <input type="radio" id="phenotypes" name="ProcessTab" checked data-container="phenotypes" />
+            <label class="tab" for="phenotypes">Phenotypes</label>
+            <input type="radio" id="budget" name="ProcessTab" data-container="budget" />
+            <label class="tab" for="budget">Budget and Time</label>
+            <input type="radio" id="overheads" name="ProcessTab" data-container="overheads" />
+            <label class="tab" for="overheads">Overheads</label>
+            <input type="radio" id="results" name="ProcessTab" data-container="results" />
+            <label class="tab" for="results">Results</label>
+            <span class="glider"></span>
+        </div>
+    </div>
+
+    <!-- Display Area -->
+    <!-- Phenotypes -->
+    <div class="tab-content" id="phenotypes-container">
+        <button class="transparent-button" onmouseover="toggleMoreText('accMethod-text', true)" onmouseout="toggleMoreText('accMethod-text', false)">Accuracy calculation method:</button>
+            <select id="r_order">
+            <option value="original">Average over phenotypes</option>
+            <option value="own">Enter your own K0, K1 and K2 values</option>
+            </select>
+            <div id="accMethod-text" class="more-text" style="color: navy;">
+                <p> Method of which to calculate estimate accuracy. Can either take parameters that were estimated from the average over a set of phenotypes in the paper, or enter your parameters. </p>
+            </div>
+            <!-- Table of values -->
+            <div class="table-container" id="PhenTable" >
+            <table id="phenotype-table">
+            <thead>
+            <tr>
+                <th>Select</th>
+                <th>Phenotype</th>
+                <th>Dataset</th>
+                <th>Analysis Type</th>
+                <th>Category</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            </table>
+            </div>
+
+            <div id="KFields" style="display: none;">
+                <p>Enter K values:
+                <input type="number" id="BudgK0" placeholder="K0">
+                <input type="number" id="BudgK1" placeholder="K1">
+                <input type="number" id="BudgK2" placeholder="K2"></p>
+            </div>
+
+            <hr class="section-divider">
+            <div class="button-container">
+                <button class="next-tab-button" onclick="goToNextTab()">Next</button>
+            </div>
+    </div>
+
+    <!-- Budget -->
+    <div class="tab-content" id="budget-container">
+        <h2>1. Monetary constraints</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('budget-text', true)" onmouseout="toggleMoreText('budget-text', false)">fMRI budget ($):</button>
+        <input type="number" id="fmribudget" name="fmribudget" placeholder="100000">
+        <div id="budget-text" class="more-text" style="color: navy;">
+        <p>The amount of money you have allocated for the fMRI portion of your study in dollars.</p>
+        </div>
+        <hr class="section-divider">
+        <h2>2. fMRI time range</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('maxT-text', true)" onmouseout="toggleMoreText('maxT-text', false)">Maximum fMRI (mins):</button>
+        <input type="number" id="maxT" name="maxT" placeholder="60">
+        <button class="transparent-button" onmouseover="toggleMoreText('minT-text', true)" onmouseout="toggleMoreText('minT-text', false)">Minimum fMRI (mins):</button>
+        <input type="number" id="minT" name="minT" placeholder="10">
+        <div id="maxT-text" class="more-text" style="color: navy;">
+        <p>Amount of fMRI scan time after which researchers find additional scan time unnecessary. E.g. if the researcher does not want spend more than an hour on fMRI, this can be set to 60 mins.</p>
+        </div>
+        <div id="minT-text" class="more-text" style="color: navy;">
+        <p> Amount of fMRI scan time where researchers feel confident they will have minimum amount of usable data. E.g. if researcher is scanning kids, they might want to set this to a higher amount as more frames will have to be discared due to motion as compared to adults.</p>
+        </div>
+        <hr class="section-divider">
+        <h2>3. MRI provider constraints</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('ScanItvl-text', true)" onmouseout="toggleMoreText('ScanItvl-text', false)">Time quantum (mins):</button>
+        <input type="number" id="ScanItvl" name="ScanItvl" placeholder="30">
+        <button class="transparent-button" onmouseover="toggleMoreText('CostTime-text', true)" onmouseout="toggleMoreText('CostTime-text', false)">MRI cost per time ($):</button>
+        <input type="number" id="CostTime" name="CostTime" placeholder="500">
+        <div id="ScanItvl-text" class="more-text" style="color: navy;">
+        <p> Time interval at which the MRI center charges the researcher (e.g 15 min, 30 min or 1 hour).</p>
+        </div>
+        <div id="CostTime-text" class="more-text" style="color: navy;">
+        <p> This should how much MRI provider charges PLUS manpower costs (e.g. if the research assistant needs to be present during the scan, factor in the cost involved as well).</p>
+        </div>
+        <hr class="section-divider">
+        <h2>4. Participant scan time constraints</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('maxS-text', true)" onmouseout="toggleMoreText('maxS-text', false)">Maximum session tolerance (mins):</button>
+        <input type="number" id="maxS" name="maxS" placeholder="300">
+        <div id="maxS-text" class="more-text" style="color: navy;">
+        <p> Researcher might want to vary this based on the population being studied (e.g. children may only be able to tolerate short scan times, whereas PhD students needing to graduate might be able to tolerate very long scan times) </p>
+        </div>
+        <hr class="section-divider">
+
+        <div class="button-container">
+            <button class="next-tab-button" onclick="goToNextTab()">Next</button>
+        </div>
+    </div>
+
+    <!-- Overheads -->
+    <div class="tab-content" id="overheads-container">
+        <h2>5. Overhead MRI time</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('otScanTime-text', true)" onmouseout="toggleMoreText('otScanTime-text', false)">One-time (mins):</button>
+        <input type="number" id="otScanTime" name="otScanTime" placeholder="10">
+        <button class="transparent-button" onmouseover="toggleMoreText('psScanTime-text', true)" onmouseout="toggleMoreText('psScanTime-text', false)">Per-session (mins):</button>
+        <input type="number" id="psScanTime" name="psScanTime" placeholder="5">
+        <div id="otScanTime-text" class="more-text" style="color: navy;">
+        <p> Scan time incurred due to other sequences being collected, or other one-time MRI scanning events (e.g. Diffusion MRI, body imaging, practice scan to acclimatize participant). </p>
+        </div>
+        <div id="psScanTime-text" class="more-text" style="color: navy;">
+        <p> Scan time overhead due to unavoidable setup for each scan session (e.g. having to acqquire T1, field map, participant set-up).</p>
+        </div>
+        <hr class="section-divider">
+        <h2>6. Overhead non-MRI cost</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('PptCost-text', true)" onmouseout="toggleMoreText('PptCost-text', false)">Per participant ($):</button>
+        <input type="number" id="PptCost" name="PptCost" placeholder="100">
+        <button class="transparent-button" onmouseover="toggleMoreText('SsnCost-text', true)" onmouseout="toggleMoreText('SsnCost-text', false)">Per session ($):</button>
+        <input type="number" id="SsnCost" name="SsnCost" placeholder="100">
+        <div id="PptCost-text" class="more-text" style="color: navy;">
+        <p> Costs related to recruitment consent (which might be influenced by target populations). Also, additional costs due to collecting other non-imaging tests (e.g. blood markers) or non-MRI imaging tests (e.g. PET) should go here as well. Other costs such as mock scanner practice for children can be included here.</p>
+        </div>
+        <div id="SsnCost-text" class="more-text" style="color: navy;">
+        <p> Logistics related to per session costs (e.g. time and effort to coordinate with participants, meeting and greeting, pre-scan safety checks, transfer of data to database, paperwork etc).</p>
+        </div>
+        <hr class="section-divider">
+        <h2>7. Costs per imaging site</h2>
+        <button class="transparent-button" onmouseover="toggleMoreText('numSite-text', true)" onmouseout="toggleMoreText('numSite-text', false)">Num of sites:</button>
+        <input type="number" id="numSite" name="numSite" placeholder="1">
+        <button class="transparent-button" onmouseover="toggleMoreText('perSite-text', true)" onmouseout="toggleMoreText('perSite-text', false)">Cost per site ($):</button>
+        <input type="number" id="perSite" name="perSite" placeholder="0">
+        <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">Costs for all sites ($):</button>
+        <input type="number" id="oneTimeSite" name="oneTimeSite" placeholder="0">
+        <div id="numSite-text" class="more-text" style="color: navy;">
+        <p> Number of sites to use for the study. If you leave this blank, it will be assumed that study is run over 1 site. </p>W
+        </div>
+        <div id="perSite-text" class="more-text" style="color: navy;">
+        <p> Costs incurred per site. E.g. hiring research assistants to run scans per site. If you leave this blank the cost will be assumed to be $0.</p>
+        </div>
+        <div id="oneTimeSite-text" class="more-text" style="color: navy;">
+        <p> One-time costs that will be incurred from managing more than 1 site and does not scale with more sites. E.g. coordination meetings for site PIs. If you leave this blank the cost will be assumed to be $0.</p>
+        </div>
+        <hr class="section-divider">
+        <div class="button-container">
+            <button class="next-tab-button" id="CalcBudg" onclick="goToNextTab()">Calculate budgeting and scanning design</button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="tab-content" id="results-container">
+        <div id="AccGraph"></div>
+        <hr class="section-divider">
+        <div id="currT" style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center;"">
+        <p style="margin-right: 10px;" style="font-size:12">fMRI scan duration (T): <span id="fMRISpan">1</span> | Number of participants (N): <span id="NSpan">0</span></p>
+        <button id="G2Optima">Go to optima</button>
+        </div>
+        <input type="range" id="fMRIT" min="1" max="100" step="1" value="1">
+        </div><br>
+        <div id="Budget_Table"></div><br>
+        <div id="BudgetBar"></div><br>
+        <div id="TimeBar"></div>
+    </div>
+
+
+    <!-- Include Sheetjs to read xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+    <!-- Include Plotly.js for graph plotting -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Scripts to generate values -->
+    <script src="budgetcalc.js"></script>
+    <!-- Script for scrolling behavior -->
+    <script>
+    function jumpToSection(containerId) {
+        // Check the containerId and redirect to the appropriate page
+        if (containerId === 'acccalc') {
+            window.location.href = 'acccalc.html';
+        } else if (containerId === 'budgetcalc') {
+            window.location.href = 'budgetcalc.html';
+        } else if (containerId === 'about') {
+            window.location.href = 'index.html';
+        }
+    } 
+    </script>
+    <!-- Script to toggle more text -->
+    <script>
+    function toggleMoreText(sectionId, show) {
+      var moreText = document.getElementById(sectionId);
+          moreText.style.display = show ? 'block' : 'none';
+    }
+    </script>
+</body>
+</html>

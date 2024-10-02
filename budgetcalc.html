@@ -45,41 +45,62 @@
     <!-- Phenotypes -->
     <div class="tab-content" id="phenotypes-container">
         <button class="transparent-button" onmouseover="toggleMoreText('accMethod-text', true)" onmouseout="toggleMoreText('accMethod-text', false)">Accuracy calculation method:</button>
-            <select id="r_order">
-            <option value="original">Average over phenotypes</option>
-            <option value="own">Enter your own K0, K1 and K2 values</option>
-            </select>
-            <div id="accMethod-text" class="more-text" style="color: navy;">
+        <select id="r_order">
+        <option value="original">Average over phenotypes</option>
+        <option value="own">Enter your own K0, K1 and K2 values</option>
+        </select>
+        <div id="accMethod-text" class="more-text" style="color: navy;">
                 <p> Method of which to calculate estimate accuracy. Can either take parameters that were estimated from the average over a set of phenotypes in the paper, or enter your parameters. </p>
-            </div>
-            <!-- Table of values -->
-            <div class="table-container" id="PhenTable" >
-            <table id="phenotype-table">
-            <thead>
-            <tr>
-                <th>Select</th>
-                <th>Phenotype</th>
-                <th>Dataset</th>
-                <th>Analysis Type</th>
-                <th>Category</th>
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-            </table>
-            </div>
+        </div>
+        <!-- Table of values -->
+        <div class="table-container" id="PhenTable" >
+        <table id="phenotype-table">
+        <thead>
+        <tr>
+            <th>Selection</th>
+            <th>Phenotype</th>
+            <th>
+                Dataset
+                <span class="dropdown-icon" onclick="toggleDropdown('dataset-dropdown', 2)">&#x25BC</span>
+                <div class="dropdown-content" id="dataset-dropdown">
+                </div>
+            </th>
+            <th>
+                Analysis Type
+                <span class="dropdown-icon" onclick="toggleDropdown('analysis-dropdown', 3)">&#x25BC</span>
+                <div class="dropdown-content" id="analysis-dropdown">
+                </div>
+            </th>
+            <th>
+                Category
+                <span class="dropdown-icon" onclick="toggleDropdown('category-dropdown', 4)">&#x25BC</span>
+                <div class="dropdown-content" id="category-dropdown">
+                </div>
+            </th>
+            <th>K0</th>
+            <th>K1</th>
+            <th>K2</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+        </table>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="clearAllSelections()">Remove current selection</button>
+            <button class="next-tab-button" onclick="selectOoi2024_phenotypes(0, 122)">Select all datasets (original run order) + task phenotypes</button>
+        </div>
 
-            <div id="KFields" style="display: none;">
-                <p>Enter K values:
-                <input type="number" id="BudgK0" placeholder="K0">
-                <input type="number" id="BudgK1" placeholder="K1">
-                <input type="number" id="BudgK2" placeholder="K2"></p>
-            </div>
-
-            <hr class="section-divider">
-            <div class="button-container">
-                <button class="next-tab-button" onclick="goToNextTab()">Next</button>
-            </div>
+        <div id="KFields" style="display: none;">
+            <p>Enter K values:
+            <input type="number" id="BudgK0" placeholder="K0">
+            <input type="number" id="BudgK1" placeholder="K1">
+            <input type="number" id="BudgK2" placeholder="K2"></p>
+        </div>
+        <hr class="section-divider">
+        <div class="button-container">
+            <button class="next-tab-button" onclick="goToNextTab()">Next</button>
+        </div>
     </div>
 
     <!-- Budget -->

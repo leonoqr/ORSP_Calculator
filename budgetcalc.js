@@ -154,6 +154,32 @@ function ReadExcel(workbook,ABCDSheet,HCPSheet,NValue,TValue,type) {
   }
   return [vec,ABCD_names,HCP_names,ABCD_K0,ABCD_K1,ABCD_K2,HCP_K0,HCP_K1,HCP_K2]
 }
+
+function CalcExcelAcc(workbook,indices,NValue,TValue,type) {
+  // Read excel notebook and save params, as well as calculate the accuracy based
+  // on the current N and T values.
+
+  let vec = [];
+  let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  {
+    for (let i = 0; i < indices.length; i++) {
+        // calculate formula
+        const row = indices[i] + 2;
+        const K0 = worksheet[`E${row}`]
+        const K1 = worksheet[`F${row}`]
+        const K2 = worksheet[`G${row}`]
+        if (type === 'Acc') {
+            vec.push(calcAcc(K0.v, K1.v, K2.v, NValue, TValue));
+        } else if (type === 'NormAcc') {
+            vec.push(calcNormAcc(K1.v, K2.v, NValue, TValue));
+        } else if (type === 'Rel') {
+            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
+        } 
+    }
+  }
+  return [vec]
+}
+
 // ---------------------------------------------------------------
 // ------ 4. Functions to draw plots ------
 function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC, curr, optim) {
@@ -316,6 +342,13 @@ function getBudgetParams() {
               alert("ERROR: K2 is empty");
               return;
           }
+      } else if (acc_option === 'original') { 
+          const checkedRowIndices = getCheckedRowIndices('phenotype-table');
+          // check whether at least one phenotype is checked
+          if (checkedRowIndices.length === 0) {
+              alert("ERROR: No phenotypes were chosen!");
+              return;
+          }
       }
 
       // change scan interval value if participant cannot tolerate the full interval
@@ -426,8 +459,9 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                 var workbook = XLSX.read(data, { type: 'array' });
 
                 // Tabulate prediction accuracy
-                var [acc,,,,,,,,] = ReadExcel(workbook, 0, 3, N, T, 'Acc');
-                var [normacc,,,,,,,,] = ReadExcel(workbook, 0, 3, N, T, 'NormAcc');
+                const checkedRowIndices = getCheckedRowIndices('phenotype-table');
+                var [acc] = CalcExcelAcc(workbook,checkedRowIndices,N,T,'Acc')
+                var [normacc] = CalcExcelAcc(workbook,checkedRowIndices,N,T,'NormAcc');
 
                 // Calculate mean accuracy and push to acc_vec
                 var [mean_pa, margin_pa,] = get_averages(acc);
@@ -488,13 +522,15 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
             acc_vec.push(calcAcc(val1,val2,val3,num_Ppt,fMRITime));
             normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime));
         } else {
+            filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/CBIG_ME_TheoreticalModel_Params.xlsx';
+/*
             // choose which xlsx to read
             if (acc_option === 'original'){
                 filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
             } else if (acc_option === 'randomized'){
                 filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_randomized_240318.xlsx';
             }
-
+*/
             promises.push(fetchAccuracyData(filePath, num_Ppt, fMRITime));
 
         };
@@ -767,6 +803,8 @@ async function loadExcelFile(url) {
 function populateTable(data) {
     const tbody = document.querySelector('#phenotype-table tbody');
     tbody.innerHTML = ''; // Clear existing rows
+    const columnOrder = ['Phenotype', 'Dataset', 'Version', 'Category',
+                         'K0', 'K1', 'K2']; // Customize this as needed
 
     data.forEach((row, index) => {
         const tr = document.createElement('tr');
@@ -781,8 +819,15 @@ function populateTable(data) {
         tr.appendChild(checkboxCell);
 
         // Populate the other cells with the row data
-        Object.values(row).forEach(value => {
+        columnOrder.forEach(column => {
             const td = document.createElement('td');
+            let value = row[column]; 
+            // Round K0, K1, K2 values to 5 significant figures
+            if (column === 'K1' || column === 'K2') {
+                value = value.toPrecision(5);
+            } else if (column === 'K0') {
+                value = value.toPrecision(3);
+            }
             td.textContent = value;
             tr.appendChild(td);
         });
@@ -790,10 +835,6 @@ function populateTable(data) {
         tbody.appendChild(tr);
     });
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-        loadExcelFile(filePath); // Load the file from the given path
-    });
 
 // ------ Add all event listeners ------
 // Tab and glider function
@@ -868,17 +909,149 @@ function goToNextTab() {
 
 // Phenotype selection option
 document.getElementById('r_order').addEventListener('change', function() {
-        var selectedOption = this.value;
-        var KFields = document.getElementById('KFields');
-        var PhenTable = document.getElementById('PhenTable');
-        if (selectedOption === 'own') {
-            KFields.style.display = 'block';
-            PhenTable.style.display = 'none';
+    var selectedOption = this.value;
+    var KFields = document.getElementById('KFields');
+    var PhenTable = document.getElementById('PhenTable');
+    if (selectedOption === 'own') {
+        KFields.style.display = 'block';
+        PhenTable.style.display = 'none';
+    } else {
+        KFields.style.display = 'none';
+        PhenTable.style.display = 'block';
+    }
+});
+
+// Dropdown for phenotype selection
+function toggleDropdown(dropdownId, columnIndex) {
+    const dropdown = document.getElementById(dropdownId);
+    
+    // Toggle the display of the dropdown
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    
+    // Populate the dropdown if it is being shown
+    if (dropdown.style.display === 'block') {
+        populateDropdown(dropdownId, columnIndex);
+    }
+}
+
+function populateDropdown(dropdownId, columnIndex) {
+    // Ensure columnIndex is a valid number
+    if (typeof columnIndex !== 'number' || columnIndex < 0) {
+        console.error("Invalid column index:", columnIndex);
+        return; // Exit if the index is invalid
+    }
+
+    const dropdown = document.getElementById(dropdownId);
+    dropdown.innerHTML = ''; // Clear existing options
+
+    // Get unique entries from the specified column
+    const entries = Array.from(document.querySelectorAll('#phenotype-table tbody tr td:nth-child(' + (columnIndex + 1) + ')'))
+                          .map(td => td.textContent.trim());
+    const uniqueEntries = [...new Set(entries)]; // Remove duplicates
+
+    // Create checkbox options for each unique entry
+    uniqueEntries.forEach(entry => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = entry;
+        checkbox.onchange = () => filterTable(); 
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(entry));
+        dropdown.appendChild(label);
+    });
+}
+
+function filterTable() {
+    // Get selected dataset and category values
+    const datasetCheckboxes = Array.from(document.querySelectorAll('#dataset-dropdown input[type="checkbox"]:checked'));
+    const categoryCheckboxes = Array.from(document.querySelectorAll('#category-dropdown input[type="checkbox"]:checked'));
+    const analysisCheckboxes = Array.from(document.querySelectorAll('#analysis-dropdown input[type="checkbox"]:checked'));
+
+    const selectedDatasets = datasetCheckboxes.map(cb => cb.value);
+    const selectedCategories = categoryCheckboxes.map(cb => cb.value);
+    const selectedAnalyses = analysisCheckboxes.map(cb => cb.value);
+
+    // Get all table rows
+    const rows = document.querySelectorAll('#phenotype-table tbody tr');
+
+    rows.forEach(row => {
+        const dataset = row.cells[2].textContent.trim(); 
+        const category = row.cells[4].textContent.trim(); 
+        const analysis = row.cells[3].textContent.trim(); 
+
+        // Check if the row matches the selected datasets, categories, and analyses
+        const isDatasetChecked = selectedDatasets.length === 0 || selectedDatasets.includes(dataset);
+        const isCategoryChecked = selectedCategories.length === 0 || selectedCategories.includes(category);
+        const isAnalysisChecked = selectedAnalyses.length === 0 || selectedAnalyses.includes(analysis);
+
+        // Check the checkbox in the row if the row matches the selected options
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        if (isDatasetChecked && isCategoryChecked && isAnalysisChecked) {
+            checkbox.checked = true; // Check the checkbox if it matches all criteria
         } else {
-            KFields.style.display = 'none';
-            PhenTable.style.display = 'block';
+            checkbox.checked = false; // Uncheck if it doesn't match
+        }
+    });
+}
+
+function selectOoi2024_phenotypes(startIndex, endIndex) {
+    // Get all table rows (excluding the header)
+    const rows = document.querySelectorAll('#phenotype-table tbody tr');
+
+    // Iterate through the rows and select checkboxes for the specified range
+    rows.forEach((row, index) => {
+        if (index >= startIndex && index <= endIndex) {
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = true; // Check the checkbox
+            }
+        } else {
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = false; // Uncheck the checkbox if out of range
+            }
+        }
+    });
+}
+
+function clearAllSelections() {
+    // Get all checkboxes in the table
+    const checkboxes = document.querySelectorAll('#phenotype-table tbody input[type="checkbox"]');
+
+    // Iterate through each checkbox and uncheck it
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false; // Uncheck the checkbox
+    });
+}
+
+function getCheckedRowIndices(tableId) {
+    const checkedIndices = []; // Array to hold the indices of checked rows
+    const table = document.getElementById(tableId); // Get the table element
+
+    // Iterate through each row in the table body
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+        const checkbox = row.querySelector('input[type="checkbox"]'); // Find the checkbox in the row
+        if (checkbox && checkbox.checked) { // Check if the checkbox is checked
+            checkedIndices.push(index); // Add the index to the array
         }
     });
 
+    return checkedIndices; // Return the array of checked indices
+}
+
 // Update budget calculator page
 CalcBudg_El.addEventListener("click", getBudgetParams);
+
+// pre-select phenotypes
+document.addEventListener("DOMContentLoaded", function() {
+    loadExcelFile(filePath)
+        .then(() => {
+            selectOoi2024_phenotypes(0, 122);
+        })
+        .catch(error => {
+            console.error("Error loading Excel file:", error);
+        });
+});

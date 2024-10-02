@@ -159,6 +159,40 @@ img {
     background-color: #f2f2f2;
 }
 
+.dropdown-icon {
+    cursor: pointer;
+    margin-left: 5px; /* Adjust spacing as needed */
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute; /* Positioned relative to the nearest positioned ancestor */
+    background-color: white; /* Background color */
+    min-width: 150px; /* Minimum width of the dropdown */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    z-index: 1; /* Stacking order */
+    padding: 10px; /* Padding for dropdown content */
+}
+
+.dropdown-content label {
+    display: flex; /* Use flex for aligning checkbox and text */
+    align-items: center; /* Center vertically */
+    justify-content: flex-start; /* Align to the left */
+    margin: 5px 0; /* Spacing between items */
+}
+
+.dropdown-content label:hover {
+    background-color: #f1f1f1; /* Highlight effect on hover */
+}
+
+.dropdown-container {
+    display: flex; /* Align items in a row */
+    align-items: center; /* Center vertically */
+    position: relative; /* Needed for absolute positioning of dropdown */
+}
+
+
 /* tab settings */
 .tabs {
   display: flex;

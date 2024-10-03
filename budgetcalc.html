@@ -199,7 +199,13 @@
 
     <!-- Results -->
     <div class="tab-content" id="results-container">
-        <div id="AccGraph"></div>
+        <div class="flex-container" >
+            <div id="AccGraph" class="left"></div>
+            <div class="right">
+                <div id="BudgetBar"></div>
+                <div id="TimeBar"></div>
+            </div>
+        </div>
         <hr class="section-divider">
         <div id="currT" style="display: flex; flex-direction: column;">
         <div style="display: flex; justify-content: space-between; align-items: center;"">
@@ -208,9 +214,9 @@
         </div>
         <input type="range" id="fMRIT" min="1" max="100" step="1" value="1">
         </div><br>
-        <div id="Budget_Table"></div><br>
-        <div id="BudgetBar"></div><br>
-        <div id="TimeBar"></div>
+        <p style="margin-right: 10px;" style="font-size:12">Training set ratio: <span id="TrainingPerc">100</span> % ~ <span id="TrainN">1</span>participants</p>
+        <input type="range" id="TrainingRatio" min="1" max="100" step="1" value="100">
+        <div id="Budget_Table"></div>
     </div>
 
 

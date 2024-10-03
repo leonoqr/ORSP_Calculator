@@ -25,12 +25,12 @@ const CurrTEl = document.getElementById('currT')
 const fMRIrangeEl = document.getElementById('fMRIT');
 const fMRIcurrTEl = document.getElementById('fMRISpan');
 const NcurrTEl = document.getElementById('NSpan');
+const TrainrangeEl = document.getElementById('TrainingRatio');
+const TrainPercEl = document.getElementById('TrainingPerc');
+const TrainNEl = document.getElementById('TrainN');
 const G2OptimaEl = document.getElementById('G2Optima');
+const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/CBIG_ME_TheoreticalModel_Params.xlsx';
 var ownAccRes = document.getElementById('ownAccresult');
-
-// ----------------------------------
-// ------ Define functions -------
-
 
 // ------ 1. Functions to calculate accuracy and reliability -------
 function calcAcc(K0,K1,K2,N,T) {
@@ -53,8 +53,8 @@ function calcRel(K0,K1,K2,N,T) {
   rel = K0 / (K0 + (1/(N/2)) * (1 - ((2*K1)/(1+(K2/T)))))
   return rel
 }
-// -----------------------------------------------------------------
-// ------ 2. Functions to collate results or calculate distributions ------
+
+// ------ 2. Functions to collate results --------------------------
 function get_averages(vec) {
   // From a vector of values, get the mean, median and confidence inteval
   // Calculate mean
@@ -87,78 +87,10 @@ function convertToTwoSigFigs(arr) {
     });
 }
 
-// ------------------------------------------------------------------------
-// ------ 3. Functions to read values from the excel sheets ------
-function ReadExcel(workbook,ABCDSheet,HCPSheet,NValue,TValue,type) {
-  // Read excel notebook and save params, as well as calculate the accuracy based
-  // on the current N and T values.
-
-  // Define variables to be saved
-  let ABCD_names = [];
-  let ABCD_K0 = [];
-  let ABCD_K1 = [];
-  let ABCD_K2 = [];
-  let HCP_names = [];
-  let HCP_K0 = [];
-  let HCP_K1 = [];
-  let HCP_K2 = [];
-  let vec = [];
-
-  // Loop through each row (2 to 18) for ABCD
-  {
-    let sheetName = workbook.SheetNames[ABCDSheet];
-    let worksheet = workbook.Sheets[sheetName];
-    for (let row = 2; row <= 18; row++) {
-        // calculate formula
-        const K0 = worksheet[`B${row}`]
-        const K1 = worksheet[`C${row}`]
-        const K2 = worksheet[`D${row}`]
-        if (type === 'Acc') {
-            vec.push(calcAcc(K0.v, K1.v, K2.v, NValue, TValue));
-        } else if (type === 'NormAcc') {
-            vec.push(calcNormAcc(K1.v, K2.v, NValue, TValue));
-        } else if (type === 'Rel') {
-            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
-        } 
-        // get phenotype names
-        const name = worksheet[`A${row}`]
-        ABCD_names.push(name.v)
-        ABCD_K0.push(Number(K0.v.toFixed(2)))
-        ABCD_K1.push(Number(K1.v.toFixed(2)))
-        ABCD_K2.push(Number(K2.v.toFixed(2)))
-    }
-  }
-  // Loop through each row (2 to 20) for HCP
-  { 
-    let sheetName = workbook.SheetNames[HCPSheet];
-    let worksheet = workbook.Sheets[sheetName];
-    for (let row = 2; row <= 20; row++) {
-        // calculate formula
-        const K0 = worksheet[`B${row}`]
-        const K1 = worksheet[`C${row}`]
-        const K2 = worksheet[`D${row}`]
-        if (type === 'Acc') {
-            vec.push(calcAcc(K0.v, K1.v, K2.v, NValue, TValue));
-        } else if (type === 'NormAcc') {
-            vec.push(calcNormAcc(K1.v, K2.v, NValue, TValue));
-        } else if (type === 'Rel') {
-            vec.push(calcRel(K0.v,K1.v,K2.v,NValue,TValue));
-        }
-        // get phenotype names
-        const name = worksheet[`A${row}`]
-        HCP_names.push(name.v)
-        HCP_K0.push(Number(K0.v.toFixed(2)))
-        HCP_K1.push(Number(K1.v.toFixed(2)))
-        HCP_K2.push(Number(K2.v.toFixed(2)))
-    }
-  }
-  return [vec,ABCD_names,HCP_names,ABCD_K0,ABCD_K1,ABCD_K2,HCP_K0,HCP_K1,HCP_K2]
-}
-
+// ------ 3. Functions to read values from the excel sheets --------
 function CalcExcelAcc(workbook,indices,NValue,TValue,type) {
   // Read excel notebook and save params, as well as calculate the accuracy based
   // on the current N and T values.
-
   let vec = [];
   let worksheet = workbook.Sheets[workbook.SheetNames[0]];
   {
@@ -180,243 +112,7 @@ function CalcExcelAcc(workbook,indices,NValue,TValue,type) {
   return [vec]
 }
 
-// ---------------------------------------------------------------
-// ------ 4. Functions to draw plots ------
-function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC, curr, optim) {
-
-    // Define variables
-    var tableDiv = document.getElementById(div_el);
-    var containerWidth = tableDiv.getBoundingClientRect().width;
-    var containerHeight = (150/500) * containerWidth;
-    if (containerWidth > 500) {
-        var containerHeight = (150/500) * containerWidth;
-        var fontsz = 12
-    } else{
-        var containerHeight = (250/500) * containerWidth;
-        var fontsz = 10
-    }
-
-    var tableData = [{
-      type: 'table',
-      columnwidth: [300, 150, 150],
-      header: {
-        values: ['Parameters', 'Current value', 'Optimal value'],
-        align: 'center',
-        line: { width: 1, color: 'black' },
-        fill: { color: '#333333' },
-        font: { family: "Arial", size: fontsz, color: "white" },
-        height: 20, 
-      },
-      cells: {
-        values: [
-            ["Pearson's Correlation", 'Normalized Accuracy',
-             'Sample size (N)', 'fMRI scan duration (T)', 'Number of sessions',
-            'Total scan length purchased', 'Unused scan time', 'fMRI Budget'],
-            [A[curr], NA[curr], N[curr], T[curr], S[curr], SL[curr], US[curr], RC[curr]],
-            [A[optim], NA[optim], N[optim], T[optim], S[optim], SL[optim], US[optim], RC[optim]],
-        ],
-        align: 'center',
-        line: { color: "black", width: 0 },
-        fill: { color: ['lightgrey', 'white'] },
-        font: { family: "Arial", size: fontsz, color: ["black"] },
-        height: 20, 
-        wrap: 'wrap',
-        columnorder: [0, 1],
-      }
-    }];
-
-    // Define the layout
-    var layout = { height: containerHeight, width: containerWidth,
-      margin: { l: 0, r: 0, b: 0, t: 0 }};
-    var config = {displayModeBar: false};
-    // Plot the table
-    Plotly.newPlot(tableDiv, tableData, layout, config);
-}
-
-function drawTable(div_el, vec, dataset, dataset_names, K0, K1, K2) {
-    // Define variables
-    var tableDiv = document.getElementById(div_el);
-    var containerWidth = tableDiv.getBoundingClientRect().width;
-    if (containerWidth > 500) {
-        var fontsz = 12
-        var containerWidth = tableDiv.getBoundingClientRect().width * (9/10);
-        var containerHeight = (1/1.75) * containerWidth;
-        //var containerWidth = 500;
-        //var containerHeight = 320;
-    } else{
-        var fontsz = 8
-        var containerWidth = tableDiv.getBoundingClientRect().width * (9/10);
-        var containerHeight = (1/1.5) * containerWidth;
-    }
-    var new_vec;
-
-    // split vector into HCP and ABCD
-    if (dataset === 'HCP') {
-       new_vec = vec.slice(17, 37).map(value => parseFloat(value.toPrecision(2)));
-    } else {
-      new_vec = vec.slice(0, 17).map(value => parseFloat(value.toPrecision(2)));
-    }
-
-    // Sort data based on K0 (descending order)
-    var sortedData = new_vec.map((value, index) => ({ index: index, value: value }))
-                        .sort((a, b) => K0[b.index] - K0[a.index]);
-    // Extract sorted indices
-    var sortedIndices = sortedData.map(item => item.index + 1);
-    // Map sorted data arrays based on the sorted indices
-    var sortedDatasetNames = sortedIndices.map(index => dataset_names[index - 1]);
-    var sortedK0 = sortedIndices.map(index => K0[index - 1]);
-    var sortedK1 = sortedIndices.map(index => K1[index - 1]);
-    var sortedK2 = sortedIndices.map(index => K2[index - 1]);
-    var sortedNewVec = sortedIndices.map(index => new_vec[index - 1]);
-
-    // Define your table data
-    var new_vec_indices = new_vec.map((_, index) => index + 1);
-    var tableData = [{
-      type: 'table',
-      columnwidth: [80, 250, 150, 150, 150, 100],
-      header: {
-        values: ['Index', 'Phenotype', 'K0', 'K1', 'K2', 'Accuracy'],
-        align: 'center',
-        line: { width: 1, color: 'black' },
-        fill: { color: '#333333' },
-        font: { family: "Arial", size: fontsz, color: "white" },
-        height: 20, 
-      },
-      cells: {
-        values: [new_vec_indices, sortedDatasetNames, sortedK0, sortedK1, sortedK2, sortedNewVec],
-        align: 'center',
-        line: { color: "black", width: 0 },
-        font: { family: "Arial", size: fontsz, color: ["black"] },
-        height: 20, 
-        wrap: 'wrap',
-        fill: {
-          color: Array.from({ length: new_vec_indices.length }, (v, i) => i % 2 === 0 ? 'white' : 'lightgrey'),
-        },
-      }
-    }];
-
-    // Define the layout
-    var layout = { height: containerHeight, width: containerWidth,
-      margin: { l: 0, r: 0, b: 0, t: 0 }};
-    var config = {displayModeBar: false};
-    // Plot the table
-    Plotly.newPlot(tableDiv, tableData, layout, config);
-}
-
-function getBudgetParams() {
-
-  // load function values from budget calculator form
-  let budgetValue = budget_El.value || budget_El.placeholder;
-  let maxTValue = maxT_El.value || maxT_El.placeholder;
-  let minTValue = minT_El.value || minT_El.placeholder;
-  var ScanItvlValue = ScanItvl_El.value || ScanItvl_El.placeholder;
-  const CostTimeValue = CostTime_El.value || CostTime_El.placeholder;
-  const psScanTimeValue = psScanTime_El.value || psScanTime_El.placeholder;
-  const otScanTimeValue = otScanTime_El.value || otScanTime_El.placeholder;
-  const PptCostValue = PptCost_El.value || PptCost_El.placeholder;
-  const SsnCostValue = SsnCost_El.value || SsnCost_El.placeholder;
-  let numSiteValue = numSite_El.value || numSite_El.placeholder;
-  let perSiteValue = perSite_El.value || perSite_El.placeholder;
-  let oneTimeSiteValue = oneTimeSite_El.value || oneTimeSite_El.placeholder;
-  const maxSValue = maxS_El.value || maxS_El.placeholder;
-  var acc_option = OrderEl.value;
-
-  // Display error message if any values are implausible
-  if (parseFloat(budgetValue) < parseFloat(CostTimeValue)) {
-      alert(`ERROR: Budget ($${budgetValue}) is less than cost of 1 scan session ($${CostTimeValue})`); 
-  } else if (parseFloat(maxTValue) < parseFloat(minTValue)) {
-      alert(`ERROR: Maximum fMRI scan time (${maxTValue} min) is less than minimum fMRI scan time (${minTValue} min)`);
-  } else if (parseFloat(maxSValue) < parseFloat(psScanTimeValue)) {
-      alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
-  } else {
-      // check if any of the options are blank
-      if (acc_option === 'own') {
-          // error if K values are empty
-          if (BudgK0.value === "") {
-              alert("ERROR: K0 is empty");
-              return;
-          } else if (BudgK1.value === "") {
-              alert("ERROR: K1 is empty");
-              return;
-          } else if (BudgK2.value === "") {
-              alert("ERROR: K2 is empty");
-              return;
-          }
-      } else if (acc_option === 'original') { 
-          const checkedRowIndices = getCheckedRowIndices('phenotype-table');
-          // check whether at least one phenotype is checked
-          if (checkedRowIndices.length === 0) {
-              alert("ERROR: No phenotypes were chosen!");
-              return;
-          }
-      }
-
-      // change scan interval value if participant cannot tolerate the full interval
-      if (parseFloat(maxSValue) < parseFloat(ScanItvlValue)) {
-          alert(`WARNING: Time participant can tolerate (${maxSValue} min) is less than scan time interval (${ScanItvlValue} min). Scan time interval will be set to ${maxSValue} min (i.e. full interval is not used)`)
-          ScanItvlValue = maxSValue
-      }
-
-      // update slider range
-      fMRIrangeEl.min = parseFloat(minTValue);
-      fMRIrangeEl.max = parseFloat(maxTValue);
-      // calculate effective scan time
-      getOptimalParams(budgetValue, maxTValue, minTValue, 
-                 ScanItvlValue, CostTimeValue, psScanTimeValue,
-                 otScanTimeValue, PptCostValue, SsnCostValue, 
-                 numSiteValue, perSiteValue, oneTimeSiteValue, maxSValue)
-      .then(([acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec]) => {
-          updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
-                  U_vec, RC_vec, parseFloat(minTValue), budgetValue, CostTimeValue,  
-                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
-                  oneTimeSiteValue, numSiteValue, perSiteValue)
-          fMRIrangeEl.addEventListener('input', function() {
-              // Update the span text with the current value of the range input
-              fMRIcurrTEl.textContent = this.value;
-              updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
-                  U_vec, RC_vec, parseFloat(this.value), budgetValue, CostTimeValue,  
-                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
-                  oneTimeSiteValue, numSiteValue, perSiteValue)
-          });
-          G2OptimaEl.addEventListener('click', function() {
-              // Update the span text with maximum location
-              var maxAcc = Math.max(...normacc_vec);
-              var maxAcc_loc = T_vec[normacc_vec.indexOf(maxAcc)];
-              fMRIcurrTEl.textContent = maxAcc_loc;
-              fMRIrangeEl.value = maxAcc_loc;
-              updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
-                  U_vec, RC_vec, parseFloat(maxAcc_loc), budgetValue, CostTimeValue,  
-                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
-                  oneTimeSiteValue, numSiteValue, perSiteValue)
-          });
-    });
-  }
-}
-
-function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
-    U_vec, RC_vec, curr_pos, budgetValue, CostTimeValue, ScanItvlValue, psScanTimeValue, otScanTimeValue,
-    PptCostValue, SsnCostValue, oneTimeSiteValue, numSiteValue, perSiteValue) {
-    // Use the returned values here
-    plotLinePlot(AccGraphEl, T_vec, normacc_vec, curr_pos)
-    // update table
-    var maxAcc = Math.max(...normacc_vec);
-    var plot_pos = T_vec.indexOf(curr_pos)
-    optimalParamsTable('Budget_Table', convertToTwoSigFigs(acc_vec), convertToTwoSigFigs(normacc_vec), 
-        N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec, plot_pos, normacc_vec.indexOf(maxAcc))
-    NcurrTEl.textContent = N_vec[plot_pos]
-    // update bar plots
-    var costperMin = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
-    var fMRI_c = T_vec[plot_pos] * N_vec[plot_pos] * costperMin
-    var MRI_overhead = (parseFloat(psScanTimeValue) * S_vec[plot_pos]) + parseFloat(otScanTimeValue)
-    var MRI_overhead_c = N_vec[plot_pos] * MRI_overhead * costperMin
-    var nMRI_overhead_c = N_vec[plot_pos] * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * S_vec[plot_pos]));
-    var siteCosts = parseFloat(oneTimeSiteValue) + (parseFloat(numSiteValue) * parseFloat(perSiteValue))
-    var unused_c = N_vec[plot_pos]  * U_vec[plot_pos] * costperMin
-    var rem_Budget = parseFloat(budgetValue) - RC_vec[plot_pos]
-    plotBarPlot('BudgetBar', fMRI_c, MRI_overhead_c, nMRI_overhead_c, siteCosts, unused_c, rem_Budget, 'Money')
-    plotBarPlot('TimeBar', T_vec[plot_pos], MRI_overhead, 0, 0, U_vec[plot_pos], 0, 'Time')
-}
-
+// ------ 4. Functions to calculate optimal accuracy ---------------
 function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                           CostTimeValue, psScanTimeValue, otScanTimeValue,
                           PptCostValue, SsnCostValue, numSiteValue,
@@ -458,10 +154,12 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
                 var data = new Uint8Array(buffer);
                 var workbook = XLSX.read(data, { type: 'array' });
 
+                // Adjust N based on training set size
+                var trainN = Math.floor(N * (TrainrangeEl.value/100))
                 // Tabulate prediction accuracy
                 const checkedRowIndices = getCheckedRowIndices('phenotype-table');
-                var [acc] = CalcExcelAcc(workbook,checkedRowIndices,N,T,'Acc')
-                var [normacc] = CalcExcelAcc(workbook,checkedRowIndices,N,T,'NormAcc');
+                var [acc] = CalcExcelAcc(workbook,checkedRowIndices,trainN,T,'Acc')
+                var [normacc] = CalcExcelAcc(workbook,checkedRowIndices,trainN,T,'NormAcc');
 
                 // Calculate mean accuracy and push to acc_vec
                 var [mean_pa, margin_pa,] = get_averages(acc);
@@ -523,14 +221,6 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
             normacc_vec.push(calcNormAcc(val2,val3,num_Ppt,fMRITime));
         } else {
             filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/CBIG_ME_TheoreticalModel_Params.xlsx';
-/*
-            // choose which xlsx to read
-            if (acc_option === 'original'){
-                filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_240109.xlsx';
-            } else if (acc_option === 'randomized'){
-                filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/Ooi_ScanTime_suppl_TheoreticalCalc_randomized_240318.xlsx';
-            }
-*/
             promises.push(fetchAccuracyData(filePath, num_Ppt, fMRITime));
 
         };
@@ -551,16 +241,65 @@ function getOptimalParams(budgetValue, maxTValue, minTValue, ScanItvlValue,
     });
 }
 
+// ------ 5. Functions to draw plots -------------------------------
+function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC, curr, optim) {
+
+    // Define variables
+    var tableDiv = document.getElementById(div_el);
+    var containerWidth = tableDiv.getBoundingClientRect().width;
+    var containerHeight = (150/500) * containerWidth;
+    if (containerWidth > 500) {
+        var containerHeight = (150/500) * containerWidth;
+        var fontsz = 12
+    } else{
+        var containerHeight = (250/500) * containerWidth;
+        var fontsz = 10
+    }
+
+    var tableData = [{
+      type: 'table',
+      columnwidth: [300, 150, 150],
+      header: {
+        values: ['Parameters', 'Current value', 'Optimal value'],
+        align: 'center',
+        line: { width: 1, color: 'black' },
+        fill: { color: '#333333' },
+        font: { family: "Arial", size: fontsz, color: "white" },
+        height: 20, 
+      },
+      cells: {
+        values: [
+            ["Pearson's Correlation", 'Normalized Accuracy',
+             'Sample size (N)', 'fMRI scan duration (T)', 'Number of sessions',
+            'Total scan length purchased', 'Unused scan time', 'fMRI Budget'],
+            [A[curr], NA[curr], N[curr], T[curr], S[curr], SL[curr], US[curr], RC[curr]],
+            [A[optim], NA[optim], N[optim], T[optim], S[optim], SL[optim], US[optim], RC[optim]],
+        ],
+        align: 'center',
+        line: { color: "black", width: 0 },
+        fill: { color: ['lightgrey', 'white'] },
+        font: { family: "Arial", size: fontsz, color: ["black"] },
+        height: 20, 
+        wrap: 'wrap',
+        columnorder: [0, 1],
+      }
+    }];
+
+    // Define the layout
+    var layout = { height: containerHeight, width: containerWidth,
+      margin: { l: 0, r: 0, b: 0, t: 0 }};
+    var config = {displayModeBar: false};
+    // Plot the table
+    Plotly.newPlot(tableDiv, tableData, layout, config);
+}
+
 function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
 
     // get dimensions
     var barDiv = document.getElementById(BarEl);
     var containerWidth = barDiv.getBoundingClientRect().width;
-    if (containerWidth > 500) {
-        var fontsz = 12
-        var containerWidth = 600;
-        var containerHeight = 125;
-    } else{
+    var containerHeight = (1/2) * containerWidth;
+    if (containerWidth < 500) {
         var fontsz = 10
         var containerWidth = 350;
         var containerHeight = 75;
@@ -691,9 +430,9 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // get sizes of plot
     var containerWidth = LineEl.getBoundingClientRect().width;
-    var containerHeight = (200/600) * containerWidth;
+    var containerHeight = (1/7) * containerWidth;
     if (containerWidth > 500) {
-        var fontsz = 12;
+        var fontsz = 14;
         var markersz = 10;
         var linewidth = 2;
         var xloc = 1;
@@ -738,9 +477,9 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
         mode: 'lines',
         name: 'Current parameters',
         line: {
-        color: 'red',
+        color: 'darkblue',
         width: linewidth,
-        dash: 'dashdot'
+        dash: 'darkblue'
         }
     };
 
@@ -781,9 +520,123 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
     // Plot the chart
     Plotly.newPlot(LineEl, [scatterTrace, lineTrace, arrowTrace], layout, config)
 }
-// ----------------------------------------
 
-const filePath = 'https://raw.githubusercontent.com/leonoqr/ORSP_Calculator/main/CBIG_ME_TheoreticalModel_Params.xlsx';
+// ------ 6. Functions to update page ------------------------------
+function getBudgetParams() {
+  // load function values from budget calculator form
+  let budgetValue = budget_El.value || budget_El.placeholder;
+  let maxTValue = maxT_El.value || maxT_El.placeholder;
+  let minTValue = minT_El.value || minT_El.placeholder;
+  var ScanItvlValue = ScanItvl_El.value || ScanItvl_El.placeholder;
+  const CostTimeValue = CostTime_El.value || CostTime_El.placeholder;
+  const psScanTimeValue = psScanTime_El.value || psScanTime_El.placeholder;
+  const otScanTimeValue = otScanTime_El.value || otScanTime_El.placeholder;
+  const PptCostValue = PptCost_El.value || PptCost_El.placeholder;
+  const SsnCostValue = SsnCost_El.value || SsnCost_El.placeholder;
+  let numSiteValue = numSite_El.value || numSite_El.placeholder;
+  let perSiteValue = perSite_El.value || perSite_El.placeholder;
+  let oneTimeSiteValue = oneTimeSite_El.value || oneTimeSite_El.placeholder;
+  const maxSValue = maxS_El.value || maxS_El.placeholder;
+  var acc_option = OrderEl.value;
+
+  // Display error message if any values are implausible
+  if (parseFloat(budgetValue) < parseFloat(CostTimeValue)) {
+      alert(`ERROR: Budget ($${budgetValue}) is less than cost of 1 scan session ($${CostTimeValue})`); 
+  } else if (parseFloat(maxTValue) < parseFloat(minTValue)) {
+      alert(`ERROR: Maximum fMRI scan time (${maxTValue} min) is less than minimum fMRI scan time (${minTValue} min)`);
+  } else if (parseFloat(maxSValue) < parseFloat(psScanTimeValue)) {
+      alert(`ERROR: Maximum scan time per session (${maxSValue} min) is less than per-session overhead scan time (${psScanTimeValue} min)`);
+  } else {
+      // check if any of the options are blank
+      if (acc_option === 'own') {
+          // error if K values are empty
+          if (BudgK0.value === "") {
+              alert("ERROR: K0 is empty");
+              return;
+          } else if (BudgK1.value === "") {
+              alert("ERROR: K1 is empty");
+              return;
+          } else if (BudgK2.value === "") {
+              alert("ERROR: K2 is empty");
+              return;
+          }
+      } else if (acc_option === 'original') { 
+          const checkedRowIndices = getCheckedRowIndices('phenotype-table');
+          // check whether at least one phenotype is checked
+          if (checkedRowIndices.length === 0) {
+              alert("ERROR: No phenotypes were chosen!");
+              return;
+          }
+      }
+
+      // change scan interval value if participant cannot tolerate the full interval
+      if (parseFloat(maxSValue) < parseFloat(ScanItvlValue)) {
+          alert(`WARNING: Time participant can tolerate (${maxSValue} min) is less than scan time interval (${ScanItvlValue} min). Scan time interval will be set to ${maxSValue} min (i.e. full interval is not used)`)
+          ScanItvlValue = maxSValue
+      }
+
+      // update slider range
+      fMRIrangeEl.min = parseFloat(minTValue);
+      fMRIrangeEl.max = parseFloat(maxTValue);
+      // calculate effective scan time
+      getOptimalParams(budgetValue, maxTValue, minTValue, 
+          ScanItvlValue, CostTimeValue, psScanTimeValue,
+          otScanTimeValue, PptCostValue, SsnCostValue, 
+          numSiteValue, perSiteValue, oneTimeSiteValue, maxSValue)
+          .then(([acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec]) => {
+                  updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                  U_vec, RC_vec, parseFloat(minTValue), budgetValue, CostTimeValue,  
+                  ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                  oneTimeSiteValue, numSiteValue, perSiteValue)
+              fMRIrangeEl.addEventListener('input', function() {
+                  // Update the span text with the current value of the range input
+                  fMRIcurrTEl.textContent = this.value;
+                  updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                      U_vec, RC_vec, parseFloat(this.value), budgetValue, CostTimeValue,  
+                      ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                      oneTimeSiteValue, numSiteValue, perSiteValue)
+              });
+              G2OptimaEl.addEventListener('click', function() {
+                   // Update the span text with maximum location
+                   var maxAcc = Math.max(...normacc_vec);
+                   var maxAcc_loc = T_vec[normacc_vec.indexOf(maxAcc)];
+                   fMRIcurrTEl.textContent = maxAcc_loc;
+                   fMRIrangeEl.value = maxAcc_loc;
+                   updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+                   U_vec, RC_vec, parseFloat(maxAcc_loc), budgetValue, CostTimeValue,  
+                   ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
+                   oneTimeSiteValue, numSiteValue, perSiteValue)
+              });
+          });
+  }
+}
+
+function updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
+    U_vec, RC_vec, curr_pos, budgetValue, CostTimeValue, ScanItvlValue, psScanTimeValue, otScanTimeValue,
+    PptCostValue, SsnCostValue, oneTimeSiteValue, numSiteValue, perSiteValue) {
+    // Use the returned values here
+    plotLinePlot(AccGraphEl, T_vec, normacc_vec, curr_pos)
+    // update table
+    var maxAcc = Math.max(...normacc_vec);
+    var plot_pos = T_vec.indexOf(curr_pos)
+    NcurrTEl.textContent = N_vec[plot_pos];
+    TrainNEl.textContent = Math.floor(N_vec[plot_pos] * (TrainrangeEl.value/100));
+    optimalParamsTable('Budget_Table', convertToTwoSigFigs(acc_vec), convertToTwoSigFigs(normacc_vec), 
+        N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec, plot_pos, normacc_vec.indexOf(maxAcc))
+    // update bar plots
+    var costperMin = parseFloat(CostTimeValue) / parseFloat(ScanItvlValue)
+    var fMRI_c = T_vec[plot_pos] * N_vec[plot_pos] * costperMin
+    var MRI_overhead = (parseFloat(psScanTimeValue) * S_vec[plot_pos]) + parseFloat(otScanTimeValue)
+    var MRI_overhead_c = N_vec[plot_pos] * MRI_overhead * costperMin
+    var nMRI_overhead_c = N_vec[plot_pos] * (parseFloat(PptCostValue) + (parseFloat(SsnCostValue) * S_vec[plot_pos]));
+    var siteCosts = parseFloat(oneTimeSiteValue) + (parseFloat(numSiteValue) * parseFloat(perSiteValue))
+    var unused_c = N_vec[plot_pos]  * U_vec[plot_pos] * costperMin
+    var rem_Budget = parseFloat(budgetValue) - RC_vec[plot_pos]
+    plotBarPlot('BudgetBar', fMRI_c, MRI_overhead_c, nMRI_overhead_c, siteCosts, unused_c, rem_Budget, 'Money')
+    plotBarPlot('TimeBar', T_vec[plot_pos], MRI_overhead, 0, 0, U_vec[plot_pos], 0, 'Time')
+}
+
+// -------------------- Event listeners ----------------------------
 // Function to load and parse the Excel file from URL
 async function loadExcelFile(url) {
      try {
@@ -836,7 +689,7 @@ function populateTable(data) {
     });
 }
 
-// ------ Add all event listeners ------
+
 // Tab and glider function
 // Open tab based on selection
 document.addEventListener("DOMContentLoaded", function () {
@@ -1042,9 +895,14 @@ function getCheckedRowIndices(tableId) {
     return checkedIndices; // Return the array of checked indices
 }
 
+// -------------------- Page loading ----------------------------
 // Update budget calculator page
 CalcBudg_El.addEventListener("click", getBudgetParams);
-
+TrainrangeEl.addEventListener('input', function() {
+     // Update the span text with the current value of the range input
+     TrainPercEl.textContent = this.value;
+     getBudgetParams();
+});
 // pre-select phenotypes
 document.addEventListener("DOMContentLoaded", function() {
     loadExcelFile(filePath)

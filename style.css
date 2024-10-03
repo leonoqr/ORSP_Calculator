@@ -76,11 +76,29 @@ img {
   word-wrap: break-word; 
 }
 .flex-container {
-  width: 100%;
-  height: 100vh;
+  width: 80%;
+  height: 50%;
   display: flex;
   max-width: none;
-  margin: 0 auto;
+}
+
+/* Left section for the AccGraph */
+.left {
+    flex: 0 0 95%; /* 70% of the width */  /* This will take up all available space on the left */
+    height: 100%; /* Full height */
+}
+
+/* Right section for the BudgetBar and TimeBar */
+.right {
+    display: flex;
+    flex-direction: column;  /* Stacks the BudgetBar and TimeBar vertically */
+    flex: 1;  /* Adjust the width ratio for the right section */
+    height: 100%; /* Ensure full height to match left side (if needed) */
+}
+
+/* Styling for the bars on the right */
+#BudgetBar, #TimeBar {
+    height: auto;  /* Take half the height each */
 }
 
 .tabs-container {

@@ -411,7 +411,7 @@ input[type="range"] {
 
 .button-container {
     display: flex;              /* Enable flexbox */
-    justify-content: flex-end; /* Align content to the right */
+    justify-content: space-between; 
     padding: 10px;            /* Optional: Add some spacing around the container */
 }
 
@@ -552,5 +552,11 @@ input[type="number"] {
         cursor: pointer;
         transition: color 0.15s ease-in;
     }
+  button {
+      font-size: 0.7rem;
+      border: none;
+      padding: 3px 6px;
+      margin-top: 10px;
+  }
 }
 

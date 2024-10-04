@@ -776,12 +776,15 @@ document.getElementById('r_order').addEventListener('change', function() {
     var selectedOption = this.value;
     var KFields = document.getElementById('KFields');
     var PhenTable = document.getElementById('PhenTable');
+    var PhenTable_buttons = document.getElementById('PhenTable_buttons');
     if (selectedOption === 'own') {
         KFields.style.display = 'block';
         PhenTable.style.display = 'none';
+        PhenTable_buttons.style.display = 'none';
     } else {
         KFields.style.display = 'none';
         PhenTable.style.display = 'block';
+        PhenTable_buttons.style.display = 'block';
     }
 });
 

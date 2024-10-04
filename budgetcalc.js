@@ -269,9 +269,9 @@ function optimalParamsTable(div_el, A, NA, N, T, S, SL, US, RC, curr, optim) {
       },
       cells: {
         values: [
-            ["Pearson's Correlation", 'Normalized Accuracy',
+            ["Accuracy (Pearson's r)", 'Fraction of Max. Accuracy',
              'Sample size (N)', 'fMRI scan duration (T)', 'Number of sessions',
-            'Total scan length purchased', 'Unused scan time', 'fMRI Budget'],
+            'Total scan length purchased', 'Unused scan time', 'Actual fMRI cost'],
             [A[curr], NA[curr], N[curr], T[curr], S[curr], SL[curr], US[curr], RC[curr]],
             [A[optim], NA[optim], N[optim], T[optim], S[optim], SL[optim], US[optim], RC[optim]],
         ],
@@ -594,8 +594,9 @@ function getBudgetParams() {
           otScanTimeValue, PptCostValue, SsnCostValue, 
           numSiteValue, perSiteValue, oneTimeSiteValue, maxSValue)
           .then(([acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, U_vec, RC_vec]) => {
+                  oldValue = Math.max(parseFloat(fMRIcurrTEl.textContent), parseFloat(minTValue));
                   updateLinePlotPosition(acc_vec, normacc_vec, N_vec, T_vec, S_vec, SD_vec, 
-                  U_vec, RC_vec, parseFloat(minTValue), budgetValue, CostTimeValue,  
+                  U_vec, RC_vec, oldValue, budgetValue, CostTimeValue,  
                   ScanItvlValue, psScanTimeValue, otScanTimeValue, PptCostValue, SsnCostValue, 
                   oneTimeSiteValue, numSiteValue, perSiteValue)
               fMRIrangeEl.addEventListener('input', function() {

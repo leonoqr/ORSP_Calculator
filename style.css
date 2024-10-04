@@ -519,3 +519,38 @@ input[type="number"] {
 
 }
 
+/* Adjustments for phone screens */
+@media (max-width: 768px) {
+    .flex-container {
+        flex-direction: column; /* Stack elements on top of each other */
+        width: 100%; /* Full width on smaller screens */
+    }
+
+    .left, .right {
+        flex: 100%; /* Make each element take full width */
+    }
+
+    /* Reduce font size on smaller screens */
+    .flex-container, .left, .right {
+        font-size: 0.8rem;
+    }
+
+    .tab-container {
+        width: 50%; /* Reduce width for smaller screens */
+        padding: 10px; /* Adjust padding for smaller screens */
+    }
+    .tab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center; /* Center-align the text */
+        height: 20px;
+        width: 50%;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 99px; /* just a high number to create pill effect */
+        cursor: pointer;
+        transition: color 0.15s ease-in;
+    }
+}
+

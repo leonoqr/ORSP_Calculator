@@ -430,7 +430,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // get sizes of plot
     var containerWidth = LineEl.getBoundingClientRect().width;
-    var containerHeight = (1/7) * containerWidth;
+    var containerHeight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) * 0.17; // 40% of the screen height
     if (containerWidth > 500) {
         var fontsz = 14;
         var markersz = 10;
@@ -468,6 +468,16 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
             size: markersz,
             color: 'green',  
         },
+    };
+
+    // Create highlight between maxY and (maxY - 0.01)
+    var highlightTrace = {
+        x: [...x_vec, ...x_vec.slice().reverse()], 
+        y: Array(x_vec.length).fill(maxY).concat(Array(x_vec.length).fill(maxY - 0.01)),  // Upper bound maxY and lower bound maxY - 1
+        fill: 'toself',  // Fill the area between these y-values, not to zero
+        mode: 'none',
+        name: 'Within 1% of optima',
+        fillcolor: 'rgba(0, 0, 255, 0.2)',  // Light blue highlight color
     };
 
     // Create arrow plot
@@ -518,7 +528,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
     var config = { displayModeBar: false };
 
     // Plot the chart
-    Plotly.newPlot(LineEl, [scatterTrace, lineTrace, arrowTrace], layout, config)
+    Plotly.newPlot(LineEl, [scatterTrace, lineTrace, highlightTrace, arrowTrace], layout, config)
 }
 
 // ------ 6. Functions to update page ------------------------------

@@ -30,13 +30,13 @@
     <div class="tabs-container">
         <div class="tabs">
             <input type="radio" id="phenotypes" name="ProcessTab" checked data-container="phenotypes" />
-            <label class="tab" for="phenotypes">Phenotypes</label>
+            <label class="tab" for="phenotypes">1. Phenotypes</label>
             <input type="radio" id="budget" name="ProcessTab" data-container="budget" />
-            <label class="tab" for="budget">Budget and Time</label>
+            <label class="tab" for="budget">2. Budget and Time</label>
             <input type="radio" id="overheads" name="ProcessTab" data-container="overheads" />
-            <label class="tab" for="overheads">Overheads</label>
+            <label class="tab" for="overheads">3. Overheads</label>
             <input type="radio" id="results" name="ProcessTab" data-container="results" />
-            <label class="tab" for="results">Results</label>
+            <label class="tab" for="results">4. Results</label>
             <span class="glider"></span>
         </div>
     </div>
@@ -109,7 +109,7 @@
         <button class="transparent-button" onmouseover="toggleMoreText('budget-text', true)" onmouseout="toggleMoreText('budget-text', false)">fMRI budget ($):</button>
         <input type="number" id="fmribudget" name="fmribudget" placeholder="100000">
         <div id="budget-text" class="more-text" style="color: navy;">
-        <p>The amount of money you have allocated for the fMRI portion of your study in dollars.</p>
+        <p>The amount of money you have allocated for the fMRI portion of your study.</p>
         </div>
         <hr class="section-divider">
         <h2>2. fMRI time range</h2>
@@ -124,7 +124,7 @@
         <p> Amount of fMRI scan time where researchers feel confident they will have minimum amount of usable data. E.g. if researcher is scanning kids, they might want to set this to a higher amount as more frames will have to be discared due to motion as compared to adults.</p>
         </div>
         <hr class="section-divider">
-        <h2>3. MRI provider constraints</h2>
+        <h2>3. MRI and manpower costs</h2>
         <button class="transparent-button" onmouseover="toggleMoreText('ScanItvl-text', true)" onmouseout="toggleMoreText('ScanItvl-text', false)">Time quantum (mins):</button>
         <input type="number" id="ScanItvl" name="ScanItvl" placeholder="30">
         <button class="transparent-button" onmouseover="toggleMoreText('CostTime-text', true)" onmouseout="toggleMoreText('CostTime-text', false)">MRI cost per time quantum ($):</button>
@@ -183,13 +183,13 @@
         <button class="transparent-button" onmouseover="toggleMoreText('oneTimeSite-text', true)" onmouseout="toggleMoreText('oneTimeSite-text', false)">Costs for all sites ($):</button>
         <input type="number" id="oneTimeSite" name="oneTimeSite" placeholder="0">
         <div id="numSite-text" class="more-text" style="color: navy;">
-        <p> Number of sites to use for the study. If you leave this blank, it will be assumed that study is run over 1 site. </p>W
+        <p> Number of sites to use for the study.</p>
         </div>
         <div id="perSite-text" class="more-text" style="color: navy;">
-        <p> Costs incurred per site. E.g. hiring research assistants to run scans per site. If you leave this blank the cost will be assumed to be $0.</p>
+        <p> Costs incurred per site. E.g. hiring research assistants to run scans per site.</p>
         </div>
         <div id="oneTimeSite-text" class="more-text" style="color: navy;">
-        <p> One-time costs that will be incurred from managing more than 1 site and does not scale with more sites. E.g. coordination meetings for site PIs. If you leave this blank the cost will be assumed to be $0.</p>
+        <p> One-time costs that will be incurred from managing more than 1 site and does not scale with more sites. E.g. coordination meetings for site PIs.</p>
         </div>
         <hr class="section-divider">
         <div class="button-container">

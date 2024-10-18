@@ -298,11 +298,16 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
     // get dimensions
     var barDiv = document.getElementById(BarEl);
     var containerWidth = barDiv.getBoundingClientRect().width;
-    var containerHeight = (1/2) * containerWidth;
+    var containerHeight = (1/2) * containerWidth + 50;  // Add 50 pixels for the legend
+
     if (containerWidth < 500) {
-        var fontsz = 10
+        var fontsz = 10;
         var containerWidth = 350;
-        var containerHeight = 75;
+        var containerHeight = 125;  // Increased from 75 to 125 to fit the legend
+    }
+
+if (mode == 'Money'){
+        containerHeight += 60;  // Increase height by 60 pixels (adjust as needed)
     }
 
     // custom hover template
@@ -405,10 +410,14 @@ function plotBarPlot(BarEl, f_v, moh_v, nmoh_v, site_v, unuse_v, rem_v, mode) {
             font: {size: fontsz},
         },
         legend: {
-            y: 0.5, // Center the legend vertically
+            y: 1,                  // Align legend to the top
+            yanchor: 'top',
             orientation: 'v',
-            traceorder: 'normal', // Explicitly set trace order to ensure horizontal legend
-            font: { size: fontsz, color: 'black' },
+            traceorder: 'normal',
+            font: { size: fontsz - 2, color: 'black' },  // Reduce font size
+            itemsizing: 'constant',
+            itemwidth: 30,         // Reduce item width
+            itemheight: 20,        // Reduce item height
         },
         hovermode: 'closest', 
         hoverlabel: {
@@ -430,7 +439,7 @@ function plotLinePlot(LineEl, x_vec, y_vec, pt) {
 
     // get sizes of plot
     var containerWidth = LineEl.getBoundingClientRect().width;
-    var containerHeight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) * 0.17; // 40% of the screen height
+    var containerHeight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) * 0.37; // 40% of the screen height
     if (containerWidth > 500) {
         var fontsz = 14;
         var markersz = 10;
@@ -819,10 +828,22 @@ function populateDropdown(dropdownId, columnIndex) {
     // Create checkbox options for each unique entry
     uniqueEntries.forEach(entry => {
         const label = document.createElement('label');
+        label.style.display = 'flex';        // Use flexbox for horizontal alignment
+        label.style.alignItems = 'center';   // Vertically center checkbox and text
+        label.style.width = '100%';          // Make sure the label takes up full width
+        label.style.paddingLeft = '0';  // Ensure no extra left padding
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = entry;
         checkbox.onchange = () => filterTable(); 
+
+       // Ensure checkbox does not shrink and has no margin
+        checkbox.style.flexShrink = '0';
+        checkbox.style.margin = '0';  // Remove any default margins
+
+        // Optional: Set a fixed width for the checkbox if needed
+        checkbox.style.width = '24px';
         
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(entry));

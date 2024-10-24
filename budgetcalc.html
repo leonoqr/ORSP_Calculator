@@ -169,7 +169,7 @@
         <button class="transparent-button" onmouseover="toggleMoreText('SsnCost-text', true)" onmouseout="toggleMoreText('SsnCost-text', false)">Per session ($):</button>
         <input type="number" id="SsnCost" name="SsnCost" placeholder="100">
         <div id="PptCost-text" class="more-text" style="color: navy;">
-        <p> Costs related to recruitment consent (which might be influenced by target populations). Also, additional costs due to collecting other non-imaging tests (e.g. blood markers) or non-MRI imaging tests (e.g. PET) should go here as well. Other costs such as mock scanner practice for children can be included here.</p>
+        <p> Costs related to recruitment/consent (which might be influenced by target populations). Also, additional costs due to collecting other non-imaging tests (e.g. blood markers) or non-MRI imaging tests (e.g. PET) should go here as well. Other costs such as mock scanner practice for children can be included here.</p>
         </div>
         <div id="SsnCost-text" class="more-text" style="color: navy;">
         <p> Logistics related to per session costs (e.g. time and effort to coordinate with participants, meeting and greeting, pre-scan safety checks, transfer of data to database, paperwork etc).</p>
@@ -245,6 +245,14 @@
       var moreText = document.getElementById(sectionId);
           moreText.style.display = show ? 'block' : 'none';
     }
+    </script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R33XW8PFE9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-R33XW8PFE9');
     </script>
 </body>
 </html>
